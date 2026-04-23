@@ -4,17 +4,35 @@ export namespace AuthApi {
   /** 登录接口参数 */
   export interface LoginParams {
     password?: string;
-    username?: string;
+    login_name?: string;
   }
 
   /** 登录接口返回值 */
   export interface LoginResult {
-    accessToken: string;
+    token: string;
+    user_id: number;
+    login_name: string;
+    expires_at: number;
+    roles: string[];
+    permissions: string[];
   }
 
+  /** 刷新 token 响应数据 */
+  export interface RefreshTokenData {
+    token: string;
+    user_id: number;
+    login_name: string;
+    expires_at: number;
+    roles: string[];
+    permissions: string[];
+  }
+
+  /** 刷新 token 完整响应（包含信封） */
   export interface RefreshTokenResult {
-    data: string;
-    status: number;
+    code: number;
+    data: RefreshTokenData;
+    message: string;
+    trace_id?: string;
   }
 }
 
@@ -28,8 +46,9 @@ export async function loginApi(data: AuthApi.LoginParams) {
 /**
  * 刷新accessToken
  */
-export async function refreshTokenApi() {
+export async function refreshTokenApi(token?: null | string) {
   return baseRequestClient.post<AuthApi.RefreshTokenResult>('/auth/refresh', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
     withCredentials: true,
   });
 }
@@ -37,15 +56,18 @@ export async function refreshTokenApi() {
 /**
  * 退出登录
  */
-export async function logoutApi() {
+export async function logoutApi(token?: null | string) {
   return baseRequestClient.post('/auth/logout', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
     withCredentials: true,
   });
 }
 
 /**
  * 获取用户权限码
+ * 注意: 权限码已在登录时返回，此接口保留用于需要刷新权限的场景
  */
 export async function getAccessCodesApi() {
-  return requestClient.get<string[]>('/auth/codes');
+  const me = await requestClient.get<{ permissions: string[] }>('/auth/me');
+  return me.permissions || [];
 }

@@ -10,7 +10,7 @@ import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 import { notification } from 'antdv-next';
 import { defineStore } from 'pinia';
 
-import { getAccessCodesApi, getUserInfoApi, loginApi, logoutApi } from '#/api';
+import { getUserInfoApi, loginApi, logoutApi } from '#/api';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -33,22 +33,23 @@ export const useAuthStore = defineStore('auth', () => {
     let userInfo: null | UserInfo = null;
     try {
       loginLoading.value = true;
-      const { accessToken } = await loginApi(params);
+      // 将前端的 username 字段转换为后端期望的 login_name
+      const loginParams = {
+        login_name: params.username,
+        password: params.password,
+      };
+      const loginResult = await loginApi(loginParams);
 
-      // 如果成功获取到 accessToken
-      if (accessToken) {
-        accessStore.setAccessToken(accessToken);
+      // 如果成功获取到 token
+      if (loginResult.token) {
+        accessStore.setAccessToken(loginResult.token);
 
         // 获取用户信息并存储到 accessStore 中
-        const [fetchUserInfoResult, accessCodes] = await Promise.all([
-          fetchUserInfo(),
-          getAccessCodesApi(),
-        ]);
-
-        userInfo = fetchUserInfoResult;
-
+        userInfo = await fetchUserInfo();
         userStore.setUserInfo(userInfo);
-        accessStore.setAccessCodes(accessCodes);
+
+        // 使用登录接口返回的权限码
+        accessStore.setAccessCodes(loginResult.permissions || []);
 
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);

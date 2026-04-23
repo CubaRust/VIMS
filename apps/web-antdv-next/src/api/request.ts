@@ -50,8 +50,8 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
    */
   async function doRefreshToken() {
     const accessStore = useAccessStore();
-    const resp = await refreshTokenApi();
-    const newToken = resp.data;
+    const resp = await refreshTokenApi(accessStore.accessToken);
+    const newToken = resp.data.token;
     accessStore.setAccessToken(newToken);
     return newToken;
   }
@@ -97,9 +97,16 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       // 这里可以根据业务进行定制,你可以拿到 error 内的信息进行定制化处理，根据不同的 code 做不同的提示，而不是直接使用 message.error 提示 msg
       // 当前mock接口返回的错误字段是 error 或者 message
       const responseData = error?.response?.data ?? {};
-      const errorMessage = responseData?.error ?? responseData?.message ?? '';
-      // 如果没有错误信息，则会根据状态码进行提示
-      message.error(errorMessage || msg);
+
+      const code = responseData.code;
+      const traceId = responseData.trace_id;
+      const finalMsg = traceId
+        ? `${msg} [code=${code}, trace=${String(traceId).slice(0, 8)}]`
+        : msg || '请求失败,请稍后重试';
+
+      if (error?.response?.status !== 401) {
+        message.error(finalMsg);
+      }
     }),
   );
 
