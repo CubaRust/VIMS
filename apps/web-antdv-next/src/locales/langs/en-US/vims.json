@@ -1,0 +1,95 @@
+{
+  "dashboard": {
+    "overview": "Overview"
+  },
+  "system": {
+    "users": "Users",
+    "roles": "Roles",
+    "permissions": "Permissions",
+    "dicts": "Dictionaries",
+    "docNoRules": "Doc No Rules"
+  },
+  "masterData": {
+    "warehouses": "Warehouses",
+    "locations": "Locations",
+    "materials": "Materials",
+    "suppliers": "Suppliers",
+    "customers": "Customers",
+    "boms": "BOMs",
+    "routes": "Routes",
+    "statusFlows": "Status Flows",
+    "recoveryTemplates": "Recovery Templates"
+  },
+  "inbound": {
+    "list": "Inbound List",
+    "create": "Create Inbound"
+  },
+  "outbound": {
+    "list": "Outbound List",
+    "create": "Create Outbound",
+    "batch": "Batch Outbound"
+  },
+  "inventory": {
+    "balance": "Balance Query",
+    "transaction": "Transaction Query",
+    "occupancy": "Location Occupancy"
+  },
+  "preIssue": {
+    "list": "Pre-issue List",
+    "create": "Create Pre-issue",
+    "warnings": "Timeout Warnings"
+  },
+  "stocktake": {
+    "list": "Stocktake List",
+    "create": "Create Stocktake",
+    "progress": "Progress Query"
+  },
+  "quality": {
+    "defects": {
+      "list": "Defect List",
+      "dismantle": "Pending Dismantle",
+      "scrap": "Pending Scrap",
+      "rework": "Pending Rework"
+    },
+    "scraps": {
+      "list": "Scrap List",
+      "create": "Create Scrap"
+    },
+    "recoveries": {
+      "list": "Recovery List",
+      "template": "Apply Template"
+    }
+  },
+  "returns": {
+    "customer": {
+      "list": "Return List",
+      "create": "Create Return"
+    },
+    "supplier": {
+      "list": "Return List",
+      "create": "Create Return"
+    }
+  },
+  "outsource": {
+    "list": "Outsource List",
+    "create": "Create Outsource",
+    "inTransit": "In-transit Query"
+  },
+  "reports": {
+    "inventory": {
+      "aging": "Aging Analysis",
+      "dormant": "Dormant Analysis",
+      "byMaterial": "By Material",
+      "byLocation": "By Location",
+      "lowStock": "Low Stock Warning"
+    },
+    "business": {
+      "todayIO": "Today I/O",
+      "transactionFlow": "Transaction Flow",
+      "exceptionSummary": "Exception Summary",
+      "defectStats": "Defect Stats",
+      "outsourceTransit": "Outsource In-transit"
+    },
+    "todo": "Todo"
+  }
+}

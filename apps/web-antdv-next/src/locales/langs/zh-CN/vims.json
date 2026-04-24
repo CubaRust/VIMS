@@ -1,0 +1,96 @@
+{
+  "dashboard": {
+    "overview": "首页概览"
+  },
+  "system": {
+    "users": "用户管理",
+    "roles": "角色管理",
+    "permissions": "权限管理",
+    "dicts": "字典管理",
+    "docNoRules": "单据编号规则"
+  },
+  "masterData": {
+    "warehouses": "仓库管理",
+    "locations": "仓位管理",
+    "materials": "物料管理",
+    "suppliers": "供应商管理",
+    "customers": "客户管理",
+    "boms": "BOM管理",
+    "routes": "工艺路线",
+    "statusFlows": "状态流转规则",
+    "recoveryTemplates": "回收模板"
+  },
+  "inbound": {
+    "list": "入库单列表",
+    "create": "创建入库单"
+  },
+  "outbound": {
+    "list": "出库单列表",
+    "create": "创建出库单",
+    "batch": "批量出库"
+  },
+  "inventory": {
+    "balance": "库存余额查询",
+    "transaction": "库存事务查询",
+    "occupancy": "仓位占用率"
+  },
+  "preIssue": {
+    "list": "预发料单列表",
+    "create": "创建预发料单",
+    "warnings": "超时预警"
+  },
+  "stocktake": {
+    "list": "盘点单列表",
+    "create": "创建盘点单",
+    "progress": "盘点进度查询"
+  },
+  "quality": {
+    "defects": {
+      "list": "不良品列表",
+      "dismantle": "待拆解列表",
+      "scrap": "待报废列表",
+      "rework": "待返工列表"
+    },
+    "scraps": {
+      "list": "报废单列表",
+      "create": "创建报废单"
+    },
+    "recoveries": {
+      "list": "回收单列表",
+      "template": "应用回收模板"
+    }
+  },
+  "returns": {
+    "customer": {
+      "list": "退货单列表",
+      "create": "创建退货单"
+    },
+    "supplier": {
+      "list": "退供单列表",
+      "create": "创建退供单"
+    }
+  },
+  "outsource": {
+    "list": "委外单列表",
+    "create": "创建委外单",
+    "inTransit": "在途查询"
+  },
+  "reports": {
+    "inventory": {
+      "aging": "库龄分析",
+      "dormant": "呆滞料分析",
+      "byMaterial": "按物料统计",
+      "byLocation": "按仓位统计",
+      "lowStock": "低库存预警"
+    },
+    "business": {
+      "todayIO": "今日出入库",
+      "transactionFlow": "事务流水",
+      "exceptionSummary": "异常汇总",
+      "defectStats": "不良品统计",
+      "outsourceTransit": "委外在途"
+    },
+    "todo": "待办事项"
+  }
+}
+

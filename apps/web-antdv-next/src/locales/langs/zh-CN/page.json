@@ -11,5 +11,19 @@
     "title": "概览",
     "analytics": "分析页",
     "workspace": "工作台"
+  },
+  "vims": {
+    "dashboard": "工作台",
+    "system": "系统管理",
+    "masterData": "主数据管理",
+    "inbound": "入库管理",
+    "outbound": "出库管理",
+    "inventory": "库存管理",
+    "preIssue": "预发料管理",
+    "stocktake": "盘点管理",
+    "quality": "质量管理",
+    "returns": "退货管理",
+    "outsource": "委外管理",
+    "reports": "报表中心"
   }
 }

@@ -11,5 +11,19 @@
     "title": "Dashboard",
     "analytics": "Analytics",
     "workspace": "Workspace"
+  },
+  "vims": {
+    "dashboard": "Dashboard",
+    "system": "System",
+    "masterData": "Master Data",
+    "inbound": "Inbound",
+    "outbound": "Outbound",
+    "inventory": "Inventory",
+    "preIssue": "Pre-issue",
+    "stocktake": "Stocktake",
+    "quality": "Quality",
+    "returns": "Returns",
+    "outsource": "Outsource",
+    "reports": "Reports"
   }
 }
