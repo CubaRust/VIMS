@@ -92,35 +92,49 @@ export async function getRoleDetail(roleId: number): Promise<RoleWithStatusView 
  * 创建角色
  */
 export async function createRole(params: RoleCreateParams): Promise<RoleWithStatusView> {
-  return api.post('/api/v1/roles' as any, params) as Promise<RoleWithStatusView>;
+  console.log('Creating role with params:', params);
+  const result = await api.post('/api/v1/roles' as any, params);
+  console.log('Create role response:', result);
+  return result as Promise<RoleWithStatusView>;
 }
 
 /**
  * 更新角色
  */
 export async function updateRole(params: RoleUpdateParams): Promise<RoleWithStatusView> {
-  return api.put(`/api/v1/roles/${params.role_id}` as any, params) as Promise<RoleWithStatusView>;
+  console.log('Updating role:', params.role_id, params);
+  const result = await api.put(`/api/v1/roles/${params.role_id}` as any, params);
+  console.log('Update role response:', result);
+  return result as Promise<RoleWithStatusView>;
 }
 
 /**
  * 删除角色
  */
 export async function deleteRole(roleId: number): Promise<void> {
-  return api.delete(`/api/v1/roles/${roleId}` as any) as Promise<void>;
+  console.log('Deleting role:', roleId);
+  const result = await api.delete(`/api/v1/roles/${roleId}` as any);
+  console.log('Delete role response:', result);
+  return result as Promise<void>;
 }
 
 /**
  * 分配权限
  */
 export async function assignPermissions(params: RolePermissionParams): Promise<void> {
-  return api.post(`/api/v1/roles/${params.role_id}/permissions` as any, { permission_ids: params.permission_ids }) as Promise<void>;
+  console.log('Assigning permissions:', params.role_id, params.permission_ids);
+  const result = await api.post(`/api/v1/roles/${params.role_id}/permissions` as any, { permission_ids: params.permission_ids });
+  console.log('Assign permissions response:', result);
+  return result as Promise<void>;
 }
 
 /**
  * 获取角色的权限
  */
 export async function getRolePermissions(roleId: number): Promise<number[]> {
+  console.log('Getting role permissions:', roleId);
   const result = await api.get(`/api/v1/roles/${roleId}/permissions` as any);
+  console.log('Get role permissions response:', result);
   return (result as any)?.permission_ids || [];
 }
 

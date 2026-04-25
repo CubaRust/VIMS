@@ -3,8 +3,8 @@
  */
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
-import { Button, Form, FormItem, Input, Space, Switch, Tree, message, Modal, Table, Tag } from 'antdv-next'
+import { onMounted, reactive, ref, computed } from 'vue'
+import { Button, Form, FormItem, Input, Space, Switch, Tree, message, Modal, Table, Tag, Card, Row, Col, Statistic } from 'antdv-next'
 import { VbenModal } from '@vben/common-ui'
 import type { RoleWithStatusView } from '#/api/system/role-api'
 import {
@@ -16,11 +16,20 @@ import {
   getRolePermissions,
 } from '#/api/system/role-api'
 import { listPermissions } from '#/api/system/permission-api'
+import { useRoles } from '#/composables/system/use-roles'
 
 defineOptions({ name: 'RoleManagement' })
 
-const roles = ref<RoleWithStatusView[]>([])
-const loading = ref(false)
+// 使用 composable
+const {
+  roles,
+  stats,
+  loading,
+  loadRoles,
+  loadStats,
+  clearCache,
+} = useRoles()
+
 const modalVisible = ref(false)
 const permissionModalVisible = ref(false)
 const editingId = ref<number | null>(null)
@@ -35,6 +44,28 @@ const roleForm = reactive({
 const selectedPermissions = ref<number[]>([])
 const permissionTree = ref<any[]>([])
 
+// 分页配置
+const pagination = reactive({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  showSizeChanger: true,
+  showQuickJumper: true,
+  showTotal: (total: number) => `共 ${total} 条`,
+  pageSizeOptions: ['10', '20', '50', '100'],
+})
+
+// 计算属性
+const filteredRoles = computed(() => {
+  return roles.value
+})
+
+const paginatedRoles = computed(() => {
+  const start = (pagination.current - 1) * pagination.pageSize
+  const end = start + pagination.pageSize
+  return filteredRoles.value.slice(start, end)
+})
+
 const roleColumns = [
   { title: '角色编码', dataIndex: 'role_code', key: 'role_code', width: 150, fixed: 'left' },
   { title: '角色名称', dataIndex: 'role_name', key: 'role_name', width: 200 },
@@ -45,18 +76,12 @@ const roleColumns = [
 ]
 
 async function loadList() {
-  loading.value = true
   try {
-    const result = await listRoles()
-    console.log('Loaded roles:', result)
-    roles.value = result
-    console.log('Roles value:', roles.value)
+    await loadRoles()
+    pagination.total = filteredRoles.value.length
   } catch (error: any) {
     console.error('Load roles error:', error)
     message.error(error.message || '加载失败')
-    roles.value = []
-  } finally {
-    loading.value = false
   }
 }
 
@@ -118,6 +143,7 @@ async function openPermissionModal(record: RoleWithStatusView) {
 
 async function handleSubmit() {
   try {
+    console.log('Submitting role:', editingId.value ? 'update' : 'create', roleForm)
     if (editingId.value) {
       await updateRole({
         role_id: editingId.value,
@@ -133,6 +159,7 @@ async function handleSubmit() {
     modalVisible.value = false
     await loadList()
   } catch (error: any) {
+    console.error('Handle submit error:', error)
     message.error(error.message || '操作失败')
   }
 }
@@ -140,6 +167,7 @@ async function handleSubmit() {
 async function handlePermissionSubmit() {
   if (!editingId.value) return
   try {
+    console.log('Assigning permissions:', editingId.value, selectedPermissions.value)
     await assignPermissions({
       role_id: editingId.value,
       permission_ids: selectedPermissions.value,
@@ -148,6 +176,7 @@ async function handlePermissionSubmit() {
     permissionModalVisible.value = false
     await loadList()
   } catch (error: any) {
+    console.error('Assign permissions error:', error)
     message.error(error.message || '分配失败')
   }
 }
@@ -161,10 +190,12 @@ function handleDelete(record: RoleWithStatusView) {
     cancelText: '取消',
     onOk: async () => {
       try {
+        console.log('Deleting role:', record.id)
         await deleteRole(record.id)
         message.success('删除成功')
         await loadList()
       } catch (error: any) {
+        console.error('Delete role error:', error)
         message.error(error.message || '删除失败')
       }
     },
@@ -180,24 +211,57 @@ function resetForm() {
   })
 }
 
-onMounted(() => {
-  loadList()
-  loadPermissions()
+function handleTableChange(pag: any, filters: any, sorter: any) {
+  pagination.current = pag.current
+  pagination.pageSize = pag.pageSize
+}
+
+onMounted(async () => {
+  await loadList()
+  await loadPermissions()
+  await loadStats()
 })
 </script>
 
 <template>
   <div class="role-management">
+    <!-- 统计卡片 -->
+    <Row :gutter="16" class="stats-row">
+      <Col :span="6">
+        <Card>
+          <Statistic title="总角色数" :value="stats?.total || 0" prefix="🏷️" />
+        </Card>
+      </Col>
+      <Col :span="6">
+        <Card>
+          <Statistic title="启用角色" :value="stats?.active || 0" prefix="✅" :value-style="{ color: '#52c41a' }" />
+        </Card>
+      </Col>
+      <Col :span="6">
+        <Card>
+          <Statistic title="停用角色" :value="stats?.inactive || 0" prefix="⛔" :value-style="{ color: '#ff4d4f' }" />
+        </Card>
+      </Col>
+      <Col :span="6">
+        <Card>
+          <Statistic title="当前页面" :value="paginatedRoles.length" :suffix="`/ ${filteredRoles.length}`" prefix="📄" />
+        </Card>
+      </Col>
+    </Row>
+
+    <!-- 工具栏 -->
     <div class="toolbar">
-      <Button type="primary" @click="openCreateModal">新建角色</Button>
+      <Button type="primary" @click="openCreateModal" disabled>新建角色（后端未实现）</Button>
     </div>
 
     <Table
       :columns="roleColumns"
-      :data-source="roles"
+      :data-source="paginatedRoles"
       :loading="loading"
       :scroll="{ x: 1200 }"
+      :pagination="pagination"
       row-key="id"
+      @change="handleTableChange"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'is_active'">
@@ -207,9 +271,9 @@ onMounted(() => {
         </template>
         <template v-else-if="column.key === 'action'">
           <Space>
-            <Button size="small" type="link" @click="openEditModal(record)">编辑</Button>
-            <Button size="small" type="link" @click="openPermissionModal(record)">分配权限</Button>
-            <Button size="small" type="link" danger @click="handleDelete(record)">删除</Button>
+            <Button size="small" type="link" @click="openEditModal(record)" disabled>编辑（后端未实现）</Button>
+            <Button size="small" type="link" @click="openPermissionModal(record)" disabled>分配权限（后端未实现）</Button>
+            <Button size="small" type="link" danger @click="handleDelete(record)" disabled>删除（后端未实现）</Button>
           </Space>
         </template>
       </template>
@@ -257,6 +321,10 @@ onMounted(() => {
 <style scoped>
 .role-management {
   padding: 16px;
+}
+
+.stats-row {
+  margin-bottom: 16px;
 }
 
 .toolbar {

@@ -1,7 +1,9 @@
-# 用户管理功能实现清单
+# 用户与角色管理功能实现清单
 
 > 最后更新时间: 2026-04-25
 > 项目路径: `/Users/x/VIMS/apps/web-antdv-next`
+>
+> **重要**: users 和 roles 模块都存在相同问题 - 后端 API 缺少 CRUD 端点
 
 ---
 
@@ -52,6 +54,14 @@
 - ✅ 总用户数统计
 - ✅ 启用用户数统计（绿色显示）
 - ✅ 停用用户数统计（红色显示）
+- ✅ 当前页面数据统计
+
+### 4. 角色管理页面 (src/views/system/roles/index.vue)
+
+#### 4.1 统计卡片
+- ✅ 总角色数统计
+- ✅ 启用角色数统计（绿色显示）
+- ✅ 停用角色数统计（红色显示）
 - ✅ 当前页面数据统计
 
 #### 3.2 搜索和筛选
@@ -113,7 +123,8 @@
 
 ### 1. 后端 API 端点
 
-#### 必须实现的端点
+#### 必须实现的端点 - Users
+
 以下端点需要在后端实现并更新 Swagger 文档：
 
 ```
@@ -121,6 +132,18 @@ POST   /api/v1/users              - 创建用户
 PUT    /api/v1/users/{id}         - 更新用户
 DELETE /api/v1/users/{id}         - 删除用户
 POST   /api/v1/users/{id}/reset-password - 重置用户密码
+```
+
+#### 必须实现的端点 - Roles
+
+**⚠️ 确认问题**: `/api/v1/roles` 端点同样只有 GET 方法，需要实现以下端点：
+
+```
+POST   /api/v1/roles              - 创建角色
+PUT    /api/v1/roles/{id}         - 更新角色
+DELETE /api/v1/roles/{id}         - 删除角色
+POST   /api/v1/roles/{id}/permissions - 分配权限
+GET    /api/v1/roles/{id}/permissions - 获取角色的权限列表
 ```
 
 #### 期望的请求/响应格式
@@ -210,12 +233,112 @@ POST /api/v1/users/1/reset-password
 }
 ```
 
+#### 期望的请求/响应格式 - Roles
+
+**1. 创建角色**
+```typescript
+// 请求
+POST /api/v1/roles
+{
+  "role_code": "manager",
+  "role_name": "经理",
+  "description": "部门经理角色",
+  "is_active": true
+}
+
+// 响应
+{
+  "code": 0,
+  "data": {
+    "id": 1,
+    "role_code": "manager",
+    "role_name": "经理",
+    "description": "部门经理角色",
+    "is_active": true,
+    "created_at": "2026-04-25T12:00:00Z",
+    "updated_at": "2026-04-25T12:00:00Z"
+  }
+}
+```
+
+**2. 更新角色**
+```typescript
+// 请求
+PUT /api/v1/roles/1
+{
+  "role_name": "高级经理",
+  "description": "高级经理角色",
+  "is_active": false
+}
+
+// 响应
+{
+  "code": 0,
+  "data": {
+    "id": 1,
+    "role_code": "manager",
+    "role_name": "高级经理",
+    "description": "高级经理角色",
+    "is_active": false,
+    "created_at": "2026-04-25T12:00:00Z",
+    "updated_at": "2026-04-25T12:00:00Z"
+  }
+}
+```
+
+**3. 删除角色**
+```typescript
+// 请求
+DELETE /api/v1/roles/1
+
+// 响应
+{
+  "code": 0,
+  "data": null
+}
+```
+
+**4. 分配权限**
+```typescript
+// 请求
+POST /api/v1/roles/1/permissions
+{
+  "permission_ids": [1, 2, 3, 5]
+}
+
+// 响应
+{
+  "code": 0,
+  "data": null
+}
+```
+
+**5. 获取角色权限**
+```typescript
+// 请求
+GET /api/v1/roles/1/permissions
+
+// 响应
+{
+  "code": 0,
+  "data": {
+    "role_id": 1,
+    "permission_ids": [1, 2, 3, 5]
+  }
+}
+```
+
 ### 2. 前端代码调整
 
 当后端实现上述 API 后，需要进行以下前端调整：
 
-#### 2.1 移除 disabled 属性
+#### 2.1 移除 Users 页面的 disabled 属性
 在 `src/views/system/users/index.vue` 中：
+
+#### 2.2 移除 Roles 页面的 disabled 属性
+在 `src/views/system/roles/index.vue` 中：
+
+⚠️ **注意**: roles 页面当前没有禁用按钮，后端未实现时调用会直接报错。建议后端实现后再添加错误处理或临时禁用功能。
 
 1. 移除"新建用户"按钮的 `disabled` 属性
 2. 移除"编辑"按钮的 `disabled` 属性
@@ -294,12 +417,27 @@ console.log('Create user response:', result);
 2. **src/api/system/role-api.ts**
    - 移除了 mock 数据
    - 改为使用真实 API 调用
+   - 添加了 CRUD 操作的调试日志
 
 3. **src/api/system/permission-api.ts**
    - 移除了 mock 数据
    - 改为使用真实 API 调用
 
 4. **src/views/system/users/index.vue**
+   - 完整的用户管理页面
+   - 统计卡片、搜索、筛选、表格、分页
+   - 新建/编辑弹窗（UI 已完成）
+   - 批量操作（UI 已完成）
+   - 数据导出功能
+
+5. **src/views/system/roles/index.vue**
+   - 完整的角色管理页面
+   - 统计卡片（总角色数、启用/停用角色、当前页面）
+   - 新建/编辑/删除角色
+   - 分配权限功能
+   - 分页功能
+   - 添加了错误处理和调试日志
+   - 使用 `useRoles` composable 管理状态
    - 完整的用户管理页面
    - 统计卡片、搜索、筛选、表格、分页
    - 新建/编辑弹窗（UI 已完成）
@@ -316,13 +454,18 @@ console.log('Create user response:', result);
 
 ### 推荐的 Commit Message 格式
 
-#### Feature: 实现用户管理页面基础功能
+#### Feature: 实现用户与角色管理页面基础功能
 
 ```
-feat: 实现用户管理页面基础功能
+feat: 实现用户与角色管理页面基础功能
 
 - 实现 API 模块 (src/api/system/user-api.ts)
   - 用户列表查询、搜索、筛选、统计
+  - 业务逻辑封装（缓存、搜索、查找）
+  - CRUD 操作接口（待后端实现）
+
+- 实现 API 模块 (src/api/system/role-api.ts)
+  - 角色列表查询、统计
   - 业务逻辑封装（缓存、搜索、查找）
   - CRUD 操作接口（待后端实现）
 
@@ -336,9 +479,15 @@ feat: 实现用户管理页面基础功能
   - 数据表格（分页、排序、多选）
   - 数据导出为 CSV
 
-- 移除所有 API 模块的 mock 数据，使用真实接口
+- 实现角色管理页面 (src/views/system/roles/index.vue)
+  - 角色列表展示
+  - 新建/编辑/删除角色（UI 已完成）
+  - 分配权限功能（UI 已完成）
 
-注意：用户创建、编辑、删除功能 UI 已完成，
+- 移除所有 API 模块的 mock 数据，使用真实接口
+- 添加调试日志用于排查后端 API 问题
+
+注意：用户和角色的 CRUD 功能 UI 已完成，
 但需等待后端实现对应的 API 端点。
 
 Closes #[issue编号]
@@ -370,7 +519,7 @@ docs: 添加用户管理功能实现清单
 
 当后端实现完所需 API 后，按以下步骤启用功能：
 
-### 步骤 1: 验证 API 可用性
+### 步骤 1: 验证 API 可用性 - Users
 ```bash
 # 测试创建用户
 curl -X POST http://your-api/api/v1/users \
@@ -384,6 +533,22 @@ curl -X PUT http://your-api/api/v1/users/1 \
 
 # 测试删除用户
 curl -X DELETE http://your-api/api/v1/users/1
+```
+
+### 步骤 1.1: 验证 API 可用性 - Roles
+```bash
+# 测试创建角色
+curl -X POST http://your-api/api/v1/roles \
+  -H "Content-Type: application/json" \
+  -d '{"role_code":"test","role_name":"测试角色"}'
+
+# 测试更新角色
+curl -X PUT http://your-api/api/v1/roles/1 \
+  -H "Content-Type: application/json" \
+  -d '{"role_name":"新角色名"}'
+
+# 测试删除角色
+curl -X DELETE http://your-api/api/v1/roles/1
 ```
 
 ### 步骤 2: 移除 disabled 属性
@@ -411,13 +576,22 @@ curl -X DELETE http://your-api/api/v1/users/1
 4. 测试删除用户
 5. 测试批量操作
 
-### 步骤 5: 提交代码
+### 步骤 5: 提交代码 - Users
 ```bash
 git add .
 git commit -m "feat: 启用用户 CRUD 功能
 
 - 后端已实现所需 API 端点
 - 移除 disabled 属性启用按钮
+- 完整测试 CRUD 操作"
+```
+
+### 步骤 6: 提交代码 - Roles
+```bash
+git add .
+git commit -m "feat: 启用角色 CRUD 功能
+
+- 后端已实现所需 API 端点
 - 完整测试 CRUD 操作"
 ```
 
@@ -428,8 +602,16 @@ git commit -m "feat: 启用用户 CRUD 功能
 请将此文档分享给后端开发团队，说明需要实现的 API 端点和期望的接口格式。
 
 **关键信息**：
+
+**Users 模块**:
 - 当前 Swagger 中 `/api/v1/users` 只有 GET 方法
 - 需要添加 POST、PUT、DELETE 方法
+- 请求/响应格式参考本文档"待实现功能"章节
+
+**Roles 模块**:
+- 当前 Swagger 中 `/api/v1/roles` 只有 GET 方法
+- 需要添加 POST、PUT、DELETE 方法
+- 需要添加 `/api/v1/roles/{id}/permissions` 端点
 - 请求/响应格式参考本文档"待实现功能"章节
 
 ---
