@@ -16,7 +16,7 @@
   },
   "type": "module",
   "scripts": {
-    "gen:api": "openapi-typescript http://localhost:18080/api-docs/openapi.json -o src/api/types.ts",
+    "gen:api": "openapi-typescript http://localhost:8080/api-docs/openapi.json -o src/api/types.ts",
     "build": "pnpm vite build --mode production",
     "build:analyze": "pnpm vite build --mode analyze",
     "dev": "pnpm vite --mode development",

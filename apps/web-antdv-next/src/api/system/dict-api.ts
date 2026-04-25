@@ -1,23 +1,51 @@
 /**
  * 数据字典 API
  *
- * 提供数据字典的查询、创建、更新功能
+ * 提供数据字典的查询、创建、更新、映射、统计等功能
  */
 
-import type { Schema } from '../shared/helpers';
-import { api } from '../shared/client-factory';
-import { enhancedApi } from '../shared/enhanced-client';
+import type { Schema } from '#/api';
+
+import { api } from '#/api';
+import { enhancedApi } from '#/api';
 
 // ============================================================================
 // 类型定义
 // ============================================================================
 
 export type DictView = Schema<'DictView'>;
-export type DictCreateBody = Schema<'CreateDictCommand'>;
-export type DictUpdateBody = Schema<'UpdateDictCommand'>;
+export type DictCreateBody = Schema<'DictCreateBody'>;
+export type DictUpdateBody = Schema<'DictUpdateBody'>;
 
 export interface DictListQuery {
   dict_type?: string;
+}
+
+export interface DictStats {
+  total: number;
+  typeCount: number;
+  active: number;
+  inactive: number;
+}
+
+/**
+ * 当前 Swagger 里 /api/v1/dicts 的 query 参数可能没有完整声明。
+ *
+ * 如果后端后续在 OpenAPI 里补充了 dict_type，
+ * 那么这里可以删除 as any，调用处直接传 params。
+ */
+function normalizeDictListQuery(params?: DictListQuery) {
+  return params as any;
+}
+
+function normalizeText(value: string) {
+  return value.trim();
+}
+
+function getDictCacheKey(params?: DictListQuery) {
+  const dictType = params?.dict_type?.trim();
+
+  return dictType ? `dicts:type:${dictType}` : 'dicts:list';
 }
 
 // ============================================================================
@@ -30,9 +58,9 @@ export interface DictListQuery {
  * @example
  * const dicts = await listDicts({ dict_type: 'material_category' })
  */
-export async function listDicts(params?: DictListQuery) {
+export async function listDicts(params?: DictListQuery): Promise<DictView[]> {
   return api.get('/api/v1/dicts', {
-    params: params as any,
+    params: normalizeDictListQuery(params),
   }) as Promise<DictView[]>;
 }
 
@@ -47,8 +75,12 @@ export async function listDicts(params?: DictListQuery) {
  *   dict_order: 1
  * })
  */
-export async function createDict(data: DictCreateBody) {
-  return api.post('/api/v1/dicts', data) as Promise<DictView>;
+export async function createDict(data: DictCreateBody): Promise<DictView> {
+  const result = await api.post('/api/v1/dicts', data);
+
+  clearDictCache();
+
+  return result as DictView;
 }
 
 /**
@@ -60,40 +92,64 @@ export async function createDict(data: DictCreateBody) {
  *   is_active: true
  * })
  */
-export async function updateDict(id: number, data: DictUpdateBody) {
-  return api.put('/api/v1/dicts/{id}', data, {
+export async function updateDict(
+  id: number,
+  data: DictUpdateBody,
+): Promise<DictView> {
+  const result = await api.put('/api/v1/dicts/{id}', data, {
     pathParams: { id },
-  }) as Promise<DictView>;
+  });
+
+  clearDictCache();
+
+  return result as DictView;
 }
 
 // ============================================================================
-// 业务逻辑封装（使用 enhancedApi）
+// 业务逻辑封装：缓存 / 查询 / 映射 / 统计
 // ============================================================================
 
 /**
- * 获取数据字典列表（带缓存）
+ * 获取数据字典列表，带缓存
  *
  * @example
  * const dicts = await getDictsCached({ dict_type: 'material_category' })
  */
-export async function getDictsCached(params?: DictListQuery) {
-  const cacheKey = params?.dict_type ? `type:${params.dict_type}` : 'all';
+export async function getDictsCached(
+  params?: DictListQuery,
+): Promise<DictView[]> {
+  const normalizedParams: DictListQuery | undefined = params?.dict_type
+    ? { dict_type: params.dict_type.trim() }
+    : undefined;
 
   return enhancedApi.get('/api/v1/dicts', {
-    params: params as any,
-    cache: { ttl: 10 * 60 * 1000, key: cacheKey }, // 缓存 10 分钟
-    label: params?.dict_type ? `获取字典: ${params.dict_type}` : '获取所有字典',
+    params: normalizeDictListQuery(normalizedParams),
+    cache: {
+      ttl: 10 * 60 * 1000,
+      key: getDictCacheKey(normalizedParams),
+    },
+    label: normalizedParams?.dict_type
+      ? `获取字典: ${normalizedParams.dict_type}`
+      : '获取所有字典',
   }) as Promise<DictView[]>;
 }
 
 /**
- * 按字典类型获取字典（带缓存）
+ * 按字典类型获取字典，带缓存
  *
  * @example
  * const dicts = await getDictsByType('material_category')
  */
-export async function getDictsByType(dictType: string) {
-  return getDictsCached({ dict_type: dictType });
+export async function getDictsByType(dictType: string): Promise<DictView[]> {
+  const normalizedDictType = normalizeText(dictType);
+
+  if (!normalizedDictType) {
+    return [];
+  }
+
+  return getDictsCached({
+    dict_type: normalizedDictType,
+  });
 }
 
 /**
@@ -102,9 +158,12 @@ export async function getDictsByType(dictType: string) {
  * @example
  * const activeDicts = await getActiveDicts('material_category')
  */
-export async function getActiveDicts(dictType: string) {
+export async function getActiveDicts(dictType: string): Promise<DictView[]> {
   const dicts = await getDictsByType(dictType);
-  return dicts.filter(d => d.is_active).sort((a, b) => a.dict_order - b.dict_order);
+
+  return dicts
+    .filter((dict) => dict.is_active)
+    .sort((a, b) => a.dict_order - b.dict_order);
 }
 
 /**
@@ -113,11 +172,24 @@ export async function getActiveDicts(dictType: string) {
  * @example
  * const value = await getDictValue('material_category', 'RAW')
  */
-export async function getDictValue(dictType: string, dictKey: string): Promise<string | null> {
+export async function getDictValue(
+  dictType: string,
+  dictKey: string,
+): Promise<string | null> {
+  const normalizedDictKey = normalizeText(dictKey);
+
+  if (!normalizedDictKey) {
+    return null;
+  }
+
   try {
     const dicts = await getDictsByType(dictType);
-    const dict = dicts.find(d => d.dict_key === dictKey && d.is_active);
-    return dict?.dict_value || null;
+
+    const dict = dicts.find(
+      (item) => item.dict_key === normalizedDictKey && item.is_active,
+    );
+
+    return dict?.dict_value ?? null;
   } catch {
     return null;
   }
@@ -129,11 +201,24 @@ export async function getDictValue(dictType: string, dictKey: string): Promise<s
  * @example
  * const key = await getDictKey('material_category', '原材料')
  */
-export async function getDictKey(dictType: string, dictValue: string): Promise<string | null> {
+export async function getDictKey(
+  dictType: string,
+  dictValue: string,
+): Promise<string | null> {
+  const normalizedDictValue = normalizeText(dictValue);
+
+  if (!normalizedDictValue) {
+    return null;
+  }
+
   try {
     const dicts = await getDictsByType(dictType);
-    const dict = dicts.find(d => d.dict_value === dictValue && d.is_active);
-    return dict?.dict_key || null;
+
+    const dict = dicts.find(
+      (item) => item.dict_value === normalizedDictValue && item.is_active,
+    );
+
+    return dict?.dict_key ?? null;
   } catch {
     return null;
   }
@@ -144,14 +229,17 @@ export async function getDictKey(dictType: string, dictValue: string): Promise<s
  *
  * @example
  * const map = await getDictMap('material_category')
- * // { 'RAW': '原材料', 'SEMI': '半成品', ... }
+ * // { RAW: '原材料', SEMI: '半成品' }
  */
-export async function getDictMap(dictType: string): Promise<Record<string, string>> {
+export async function getDictMap(
+  dictType: string,
+): Promise<Record<string, string>> {
   const dicts = await getActiveDicts(dictType);
-  return dicts.reduce((map, dict) => {
+
+  return dicts.reduce<Record<string, string>>((map, dict) => {
     map[dict.dict_key] = dict.dict_value;
     return map;
-  }, {} as Record<string, string>);
+  }, {});
 }
 
 /**
@@ -162,8 +250,14 @@ export async function getDictMap(dictType: string): Promise<Record<string, strin
  */
 export async function getAllDictTypes(): Promise<string[]> {
   const dicts = await getDictsCached();
-  const types = new Set(dicts.map(d => d.dict_type));
-  return Array.from(types).sort();
+
+  return Array.from(
+    new Set(
+      dicts
+        .map((dict) => dict.dict_type)
+        .filter(Boolean),
+    ),
+  ).sort();
 }
 
 /**
@@ -172,10 +266,20 @@ export async function getAllDictTypes(): Promise<string[]> {
  * @example
  * const exists = await checkDictKeyExists('material_category', 'RAW')
  */
-export async function checkDictKeyExists(dictType: string, dictKey: string): Promise<boolean> {
+export async function checkDictKeyExists(
+  dictType: string,
+  dictKey: string,
+): Promise<boolean> {
+  const normalizedDictKey = normalizeText(dictKey);
+
+  if (!normalizedDictKey) {
+    return false;
+  }
+
   try {
     const dicts = await getDictsByType(dictType);
-    return dicts.some(d => d.dict_key === dictKey);
+
+    return dicts.some((dict) => dict.dict_key === normalizedDictKey);
   } catch {
     return false;
   }
@@ -187,46 +291,80 @@ export async function checkDictKeyExists(dictType: string, dictKey: string): Pro
  * @example
  * const result = await batchGetDicts(['material_category', 'unit_type'])
  */
-export async function batchGetDicts(dictTypes: string[]) {
+export async function batchGetDicts(
+  dictTypes: string[],
+): Promise<DictView[][]> {
+  const normalizedDictTypes = Array.from(
+    new Set(
+      dictTypes
+        .map((dictType) => normalizeText(dictType))
+        .filter(Boolean),
+    ),
+  );
+
+  if (normalizedDictTypes.length === 0) {
+    return [];
+  }
+
   return enhancedApi.batch(
-    dictTypes.map((type) => () => getDictsByType(type))
+    normalizedDictTypes.map(
+      (dictType) => () => getDictsByType(dictType),
+    ),
   );
 }
 
 /**
- * 获取字典统计信息（带重试）
+ * 获取字典统计信息，带重试和缓存
  *
  * @example
  * const stats = await getDictStats()
  */
-export async function getDictStats() {
-  const result = await enhancedApi.get('/api/v1/dicts', {
-    params: {} as any,
-    retry: { times: 3, delay: 1000 },
-    cache: { ttl: 10 * 60 * 1000 },
+export async function getDictStats(): Promise<DictStats> {
+  const dicts = (await enhancedApi.get('/api/v1/dicts', {
+    params: normalizeDictListQuery(),
+    retry: {
+      times: 3,
+      delay: 1000,
+    },
+    cache: {
+      ttl: 10 * 60 * 1000,
+      key: 'dicts:stats',
+    },
     label: '获取字典统计',
-  }) as DictView[];
+  })) as DictView[];
 
-  const typeCount = new Set(result.map(d => d.dict_type)).size;
+  const typeCount = new Set(
+    dicts
+      .map((dict) => dict.dict_type)
+      .filter(Boolean),
+  ).size;
 
   return {
-    total: result.length,
+    total: dicts.length,
     typeCount,
-    active: result.filter(d => d.is_active).length,
-    inactive: result.filter(d => !d.is_active).length,
+    active: dicts.filter((dict) => dict.is_active).length,
+    inactive: dicts.filter((dict) => !dict.is_active).length,
   };
 }
 
 /**
- * 预加载常用字典（后台加载）
+ * 预加载常用字典
  *
  * @example
  * preloadCommonDicts(['material_category', 'unit_type'])
  */
 export function preloadCommonDicts(dictTypes: string[]) {
-  dictTypes.forEach(type => {
-    getDictsByType(type).catch(() => {
-      // 忽略错误
+  const normalizedDictTypes = Array.from(
+    new Set(
+      dictTypes
+        .map((dictType) => normalizeText(dictType))
+        .filter(Boolean),
+    ),
+  );
+
+  normalizedDictTypes.forEach((dictType) => {
+    void getDictsByType(dictType).catch(() => {
+      // 忽略预加载失败
     });
   });
 }
@@ -239,12 +377,32 @@ export function preloadCommonDicts(dictTypes: string[]) {
  * 清除字典相关缓存
  */
 export function clearDictCache() {
-  enhancedApi.clearCache('dicts');
+  enhancedApi.clearCache('dicts:');
+}
+
+/**
+ * 清除字典列表缓存
+ */
+export function clearDictListCache() {
+  enhancedApi.clearCache('dicts:list');
+}
+
+/**
+ * 清除字典统计缓存
+ */
+export function clearDictStatsCache() {
+  enhancedApi.clearCache('dicts:stats');
 }
 
 /**
  * 清除指定类型的字典缓存
  */
 export function clearDictTypeCache(dictType: string) {
-  enhancedApi.clearCache(`type:${dictType}`);
+  const normalizedDictType = normalizeText(dictType);
+
+  if (!normalizedDictType) {
+    return;
+  }
+
+  enhancedApi.clearCache(`dicts:type:${normalizedDictType}`);
 }

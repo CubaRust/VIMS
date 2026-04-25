@@ -5,8 +5,8 @@
  */
 
 import type { Schema } from '../shared/helpers';
-import { api } from '../shared/client-factory';
-import { enhancedApi } from '../shared/enhanced-client';
+import { api } from '../shared/api';
+import { enhancedApi } from '../shared/enhanced-api';
 
 // ============================================================================
 // 类型定义

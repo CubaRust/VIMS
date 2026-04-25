@@ -1,19 +1,27 @@
 /**
  * 单据编号规则 API
  *
- * 提供单据编号规则的查询和更新功能
+ * 提供单据编号规则的查询、更新、预览、统计等功能
  */
 
-import type { Schema } from '../shared/helpers';
-import { api } from '../shared/client-factory';
-import { enhancedApi } from '../shared/enhanced-client';
+import type { Schema } from '#/api';
+
+import { api } from '#/api';
+import { enhancedApi } from '#/api';
 
 // ============================================================================
 // 类型定义
 // ============================================================================
 
 export type DocNoRuleView = Schema<'DocNoRuleView'>;
-export type DocNoRuleUpdateBody = Schema<'UpdateDocNoRuleCommand'>;
+export type DocNoRuleUpdateBody = Schema<'DocNoRuleUpdateBody'>;
+
+export interface DocNoRuleStats {
+  total: number;
+  docTypes: string[];
+}
+
+export type DocDatePattern = 'YYYYMMDD' | 'YYMMDD' | 'YYYYMM' | 'YYMM' | string;
 
 // ============================================================================
 // 基础操作
@@ -25,7 +33,7 @@ export type DocNoRuleUpdateBody = Schema<'UpdateDocNoRuleCommand'>;
  * @example
  * const rules = await listDocNoRules()
  */
-export async function listDocNoRules() {
+export async function listDocNoRules(): Promise<DocNoRuleView[]> {
   return api.get('/api/v1/doc-no-rules') as Promise<DocNoRuleView[]>;
 }
 
@@ -39,25 +47,35 @@ export async function listDocNoRules() {
  *   seq_length: 4
  * })
  */
-export async function updateDocNoRule(id: number, data: DocNoRuleUpdateBody) {
-  return api.put('/api/v1/doc-no-rules/{id}', data, {
+export async function updateDocNoRule(
+  id: number,
+  data: DocNoRuleUpdateBody,
+): Promise<DocNoRuleView> {
+  const result = await api.put('/api/v1/doc-no-rules/{id}', data, {
     pathParams: { id },
-  }) as Promise<DocNoRuleView>;
+  });
+
+  clearDocNoRuleCache();
+
+  return result as DocNoRuleView;
 }
 
 // ============================================================================
-// 业务逻辑封装（使用 enhancedApi）
+// 业务逻辑封装：缓存 / 查询 / 预览 / 统计
 // ============================================================================
 
 /**
- * 获取单据编号规则列表（带缓存）
+ * 获取单据编号规则列表，带缓存
  *
  * @example
  * const rules = await getDocNoRulesCached()
  */
-export async function getDocNoRulesCached() {
+export async function getDocNoRulesCached(): Promise<DocNoRuleView[]> {
   return enhancedApi.get('/api/v1/doc-no-rules', {
-    cache: { ttl: 10 * 60 * 1000 }, // 缓存 10 分钟（规则变化较少）
+    cache: {
+      ttl: 10 * 60 * 1000,
+      key: 'doc-no-rules:list',
+    },
     label: '获取单据编号规则',
   }) as Promise<DocNoRuleView[]>;
 }
@@ -68,10 +86,21 @@ export async function getDocNoRulesCached() {
  * @example
  * const rule = await getDocNoRuleByType('INBOUND')
  */
-export async function getDocNoRuleByType(docType: string): Promise<DocNoRuleView | null> {
+export async function getDocNoRuleByType(
+  docType: string,
+): Promise<DocNoRuleView | null> {
+  const normalizedDocType = docType.trim();
+
+  if (!normalizedDocType) {
+    return null;
+  }
+
   try {
     const rules = await getDocNoRulesCached();
-    return rules.find(r => r.doc_type === docType) || null;
+
+    return (
+      rules.find((rule) => rule.doc_type === normalizedDocType) ?? null
+    );
   } catch {
     return null;
   }
@@ -85,7 +114,8 @@ export async function getDocNoRuleByType(docType: string): Promise<DocNoRuleView
  */
 export async function getDocPrefix(docType: string): Promise<string | null> {
   const rule = await getDocNoRuleByType(docType);
-  return rule?.doc_prefix || null;
+
+  return rule?.doc_prefix ?? null;
 }
 
 /**
@@ -94,9 +124,12 @@ export async function getDocPrefix(docType: string): Promise<string | null> {
  * @example
  * const pattern = await getDocDatePattern('INBOUND')
  */
-export async function getDocDatePattern(docType: string): Promise<string | null> {
+export async function getDocDatePattern(
+  docType: string,
+): Promise<string | null> {
   const rule = await getDocNoRuleByType(docType);
-  return rule?.date_pattern || null;
+
+  return rule?.date_pattern ?? null;
 }
 
 /**
@@ -105,9 +138,35 @@ export async function getDocDatePattern(docType: string): Promise<string | null>
  * @example
  * const length = await getDocSeqLength('INBOUND')
  */
-export async function getDocSeqLength(docType: string): Promise<number | null> {
+export async function getDocSeqLength(
+  docType: string,
+): Promise<number | null> {
   const rule = await getDocNoRuleByType(docType);
-  return rule?.seq_length || null;
+
+  return rule?.seq_length ?? null;
+}
+
+/**
+ * 根据规则格式化日期
+ */
+function formatDateByPattern(date: Date, pattern: DocDatePattern): string {
+  const year = String(date.getFullYear());
+  const shortYear = year.slice(2);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  switch (pattern) {
+    case 'YYYYMMDD':
+      return `${year}${month}${day}`;
+    case 'YYMMDD':
+      return `${shortYear}${month}${day}`;
+    case 'YYYYMM':
+      return `${year}${month}`;
+    case 'YYMM':
+      return `${shortYear}${month}`;
+    default:
+      return '';
+  }
 }
 
 /**
@@ -119,30 +178,15 @@ export async function getDocSeqLength(docType: string): Promise<number | null> {
  */
 export async function previewDocNo(docType: string): Promise<string | null> {
   const rule = await getDocNoRuleByType(docType);
-  if (!rule) return null;
 
-  const now = new Date();
-  let dateStr = '';
-
-  // 简单的日期格式化
-  switch (rule.date_pattern) {
-    case 'YYYYMMDD':
-      dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-      break;
-    case 'YYMMDD':
-      dateStr = now.toISOString().slice(2, 10).replace(/-/g, '');
-      break;
-    case 'YYYYMM':
-      dateStr = now.toISOString().slice(0, 7).replace(/-/g, '');
-      break;
-    case 'YYMM':
-      dateStr = now.toISOString().slice(2, 7).replace(/-/g, '');
-      break;
-    default:
-      dateStr = '';
+  if (!rule) {
+    return null;
   }
 
-  const seq = String(rule.current_seq + 1).padStart(rule.seq_length, '0');
+  const dateStr = formatDateByPattern(new Date(), rule.date_pattern);
+  const nextSeq = Number(rule.current_seq ?? 0) + 1;
+  const seq = String(nextSeq).padStart(rule.seq_length, '0');
+
   return `${rule.doc_prefix}${dateStr}${dateStr ? '-' : ''}${seq}`;
 }
 
@@ -154,7 +198,14 @@ export async function previewDocNo(docType: string): Promise<string | null> {
  */
 export async function getAllDocTypes(): Promise<string[]> {
   const rules = await getDocNoRulesCached();
-  return rules.map(r => r.doc_type).sort();
+
+  return Array.from(
+    new Set(
+      rules
+        .map((rule) => rule.doc_type)
+        .filter(Boolean),
+    ),
+  ).sort();
 }
 
 /**
@@ -163,40 +214,70 @@ export async function getAllDocTypes(): Promise<string[]> {
  * @example
  * const rules = await batchGetDocNoRules(['INBOUND', 'OUTBOUND'])
  */
-export async function batchGetDocNoRules(docTypes: string[]) {
+export async function batchGetDocNoRules(
+  docTypes: string[],
+): Promise<Array<DocNoRuleView | null>> {
+  const normalizedDocTypes = Array.from(
+    new Set(
+      docTypes
+        .map((docType) => docType.trim())
+        .filter(Boolean),
+    ),
+  );
+
+  if (normalizedDocTypes.length === 0) {
+    return [];
+  }
+
   return enhancedApi.batch(
-    docTypes.map((type) => () => getDocNoRuleByType(type))
+    normalizedDocTypes.map(
+      (docType) => () => getDocNoRuleByType(docType),
+    ),
   );
 }
 
 /**
- * 获取单据编号规则统计信息（带重试）
+ * 获取单据编号规则统计信息，带重试和缓存
  *
  * @example
  * const stats = await getDocNoRuleStats()
  */
-export async function getDocNoRuleStats() {
-  const result = await enhancedApi.get('/api/v1/doc-no-rules', {
-    retry: { times: 3, delay: 1000 },
-    cache: { ttl: 10 * 60 * 1000 },
+export async function getDocNoRuleStats(): Promise<DocNoRuleStats> {
+  const rules = (await enhancedApi.get('/api/v1/doc-no-rules', {
+    retry: {
+      times: 3,
+      delay: 1000,
+    },
+    cache: {
+      ttl: 10 * 60 * 1000,
+      key: 'doc-no-rules:stats',
+    },
     label: '获取单据编号规则统计',
-  }) as DocNoRuleView[];
+  })) as DocNoRuleView[];
+
+  const docTypes = Array.from(
+    new Set(
+      rules
+        .map((rule) => rule.doc_type)
+        .filter(Boolean),
+    ),
+  ).sort();
 
   return {
-    total: result.length,
-    docTypes: result.map(r => r.doc_type),
+    total: rules.length,
+    docTypes,
   };
 }
 
 /**
- * 预加载单据编号规则（后台加载）
+ * 预加载单据编号规则
  *
  * @example
  * preloadDocNoRules()
  */
 export function preloadDocNoRules() {
-  getDocNoRulesCached().catch(() => {
-    // 忽略错误
+  void getDocNoRulesCached().catch(() => {
+    // 忽略预加载失败
   });
 }
 
@@ -205,8 +286,22 @@ export function preloadDocNoRules() {
 // ============================================================================
 
 /**
- * 清除单据编号规则缓存
+ * 清除单据编号规则相关缓存
  */
 export function clearDocNoRuleCache() {
-  enhancedApi.clearCache('doc-no-rules');
+  enhancedApi.clearCache('doc-no-rules:');
+}
+
+/**
+ * 清除单据编号规则列表缓存
+ */
+export function clearDocNoRuleListCache() {
+  enhancedApi.clearCache('doc-no-rules:list');
+}
+
+/**
+ * 清除单据编号规则统计缓存
+ */
+export function clearDocNoRuleStatsCache() {
+  enhancedApi.clearCache('doc-no-rules:stats');
 }

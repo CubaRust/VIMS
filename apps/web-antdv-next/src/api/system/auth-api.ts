@@ -1,206 +1,186 @@
-/**
- * 认证 API
- *
- * 提供登录、登出、刷新 token、获取当前用户、修改密码等功能
- */
-
-import type { Schema } from '../shared/helpers';
-import { api } from '../shared/client-factory';
-import { enhancedApi } from '../shared/enhanced-client';
-
-// ============================================================================
-// 类型定义
-// ============================================================================
-
-export type LoginCommand = Schema<'LoginCommand'>;
-export type LoginResult = Schema<'LoginResult'>;
-export type UserView = Schema<'UserView'>;
-export type ChangePasswordCommand = Schema<'ChangePasswordCommand'>;
-
-// ============================================================================
-// 认证操作
-// ============================================================================
-
-/**
- * 用户登录
- *
- * @example
- * const result = await login({
- *   login_name: 'admin',
- *   password: 'password123'
- * })
- */
-export async function login(data: LoginCommand) {
-  return api.post('/api/v1/auth/login', data) as Promise<LoginResult>;
-}
-
-/**
- * 用户登出
- *
- * @example
- * await logout()
- */
-export async function logout() {
-  return api.post('/api/v1/auth/logout', {});
-}
-
-/**
- * 刷新 token
- *
- * @example
- * const result = await refreshToken()
- */
-export async function refreshToken() {
-  return api.post('/api/v1/auth/refresh', {}) as Promise<LoginResult>;
-}
-
-/**
- * 获取当前用户信息
- *
- * @example
- * const user = await getCurrentUser()
- */
-export async function getCurrentUser() {
-  return api.get('/api/v1/auth/me') as Promise<UserView>;
-}
-
-/**
- * 修改当前用户密码
- *
- * @example
- * await changePassword({
- *   old_password: 'oldpass123',
- *   new_password: 'newpass456'
- * })
- */
-export async function changePassword(data: ChangePasswordCommand) {
-  return api.put('/api/v1/auth/password', data);
-}
-
-// ============================================================================
-// 业务逻辑封装（使用 enhancedApi）
-// ============================================================================
-
-/**
- * 获取当前用户信息（带缓存）
- *
- * @example
- * const user = await getCurrentUserCached()
- */
-export async function getCurrentUserCached() {
-  return enhancedApi.get('/api/v1/auth/me', {
-    cache: { ttl: 5 * 60 * 1000 }, // 缓存 5 分钟
-    label: '获取当前用户',
-  }) as Promise<UserView>;
-}
-
-/**
- * 登录（带重试）
- *
- * @example
- * const result = await loginWithRetry({
- *   login_name: 'admin',
- *   password: 'password123'
- * })
- */
-export async function loginWithRetry(data: LoginCommand) {
-  return enhancedApi.post('/api/v1/auth/login', data, {
-    retry: { times: 3, delay: 1000 },
-    label: '用户登录',
-  }) as Promise<LoginResult>;
-}
-
-/**
- * 检查用户是否已登录
- *
- * @example
- * const isLoggedIn = await checkLoginStatus()
- */
-export async function checkLoginStatus(): Promise<boolean> {
-  try {
-    await getCurrentUser();
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * 检查用户是否有指定权限
- *
- * @example
- * const hasPermission = await checkPermission('sys.user.manage')
- */
-export async function checkPermission(permCode: string): Promise<boolean> {
-  try {
-    const user = await getCurrentUserCached();
-    return user.permissions?.includes(permCode) || false;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * 检查用户是否有指定角色
- *
- * @example
- * const hasRole = await checkRole('admin')
- */
-export async function checkRole(roleCode: string): Promise<boolean> {
-  try {
-    const user = await getCurrentUserCached();
-    return user.roles?.includes(roleCode) || false;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * 获取用户权限列表
- *
- * @example
- * const permissions = await getUserPermissions()
- */
-export async function getUserPermissions(): Promise<string[]> {
-  try {
-    const user = await getCurrentUserCached();
-    return user.permissions || [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * 获取用户角色列表
- *
- * @example
- * const roles = await getUserRoles()
- */
-export async function getUserRoles(): Promise<string[]> {
-  try {
-    const user = await getCurrentUserCached();
-    return user.roles || [];
-  } catch {
-    return [];
-  }
-}
-
-// ============================================================================
-// 缓存管理
-// ============================================================================
-
-/**
- * 清除当前用户缓存
- */
-export function clearCurrentUserCache() {
-  enhancedApi.clearCache('auth/me');
-}
-
-/**
- * 登出并清除所有缓存
- */
-export async function logoutAndClearCache() {
-  await logout();
-  clearCurrentUserCache();
-  enhancedApi.clearCache(); // 清除所有缓存
-}
+// // ==========================
+// // auth-api.ts 完整安全版本
+// // ==========================
+//
+// import type { Schema } from '#/api';
+// import { api } from '#/api';
+// import { enhancedApi } from '#/api';
+//
+// // ==========================
+// // 类型定义
+// // ==========================
+//
+// export type LoginCommand = Schema<'LoginBody'>;
+// export type LoginResult = Schema<'LoginData'>;
+// export type UserView = Schema<'UserView'>;
+// export type ChangePasswordCommand = Schema<'ChangePasswordBody'>;
+//
+// // 扩展 UserView 增加可选 permissions
+// export interface ExtendedUserView extends UserView {
+//   permissions?: string[];
+// }
+//
+// // 登录 API 返回类型可能是 LoginResult 或错误对象
+// type LoginResponse = LoginResult | { code: number; message: string; trace_id?: string };
+//
+// export interface AuthCheckResult {
+//   loggedIn: boolean;
+//   user: ExtendedUserView | null;
+// }
+//
+// // ==========================
+// // 缓存 Key
+// // ==========================
+// const CURRENT_USER_CACHE_KEY = 'auth:me';
+//
+// // ==========================
+// // 工具函数
+// // ==========================
+// function normalizeText(value: string) {
+//   return value.trim();
+// }
+//
+// // ==========================
+// // 基础认证操作
+// // ==========================
+// export async function login(data: LoginCommand): Promise<LoginResult | null> {
+//   try {
+//     const result = (await api.post('/api/v1/auth/login', data)) as LoginResponse;
+//
+//     if ('code' in result) {
+//       console.error('登录失败', result.message);
+//       return null;
+//     }
+//
+//     clearCurrentUserCache();
+//     return result as LoginResult;
+//   } catch (err) {
+//     console.error('登录异常', err);
+//     return null;
+//   }
+// }
+//
+// export async function logout(): Promise<void> {
+//   await api.post('/api/v1/auth/logout');
+//   clearAuthCache();
+// }
+//
+// export async function refreshToken(): Promise<LoginResult | null> {
+//   try {
+//     const result = (await api.post('/api/v1/auth/refresh')) as LoginResult;
+//     clearCurrentUserCache();
+//     return result;
+//   } catch (err) {
+//     console.error('刷新 token 失败', err);
+//     return null;
+//   }
+// }
+//
+// export async function getCurrentUser(): Promise<ExtendedUserView | null> {
+//   try {
+//     const user = await api.get('/api/v1/auth/me');
+//     return { ...(user as UserView), permissions: (user as any).permissions ?? [] };
+//   } catch (err) {
+//     console.error('获取当前用户失败', err);
+//     return null;
+//   }
+// }
+//
+// export async function changePassword(data: ChangePasswordCommand): Promise<void> {
+//   await api.put('/api/v1/auth/password', data);
+//   clearAuthCache();
+// }
+//
+// // ==========================
+// // 缓存 / 权限封装
+// // ==========================
+// export async function getCurrentUserCached(): Promise<ExtendedUserView | null> {
+//   try {
+//     const user = await enhancedApi.get('/api/v1/auth/me', {
+//       cache: { ttl: 5 * 60 * 1000, key: CURRENT_USER_CACHE_KEY },
+//       label: '获取当前用户',
+//     });
+//     return { ...(user as UserView), permissions: (user as any).permissions ?? [] };
+//   } catch (err) {
+//     console.error('获取缓存用户失败', err);
+//     return null;
+//   }
+// }
+//
+// // 权限检查
+// export async function checkPermission(permCode: string): Promise<boolean> {
+//   const user = await getCurrentUserCached();
+//   return user?.permissions?.includes(normalizeText(permCode)) ?? false;
+// }
+//
+// export async function checkAnyPermission(permCodes: string[]): Promise<boolean> {
+//   const user = await getCurrentUserCached();
+//   if (!user) return false;
+//   return permCodes
+//     .map((p) => normalizeText(p))
+//     .filter(Boolean)
+//     .some((p) => user.permissions?.includes(p) ?? false);
+// }
+//
+// export async function checkAllPermissions(permCodes: string[]): Promise<boolean> {
+//   const user = await getCurrentUserCached();
+//   if (!user) return false;
+//   return permCodes
+//     .map((p) => normalizeText(p))
+//     .filter(Boolean)
+//     .every((p) => user.permissions?.includes(p) ?? false);
+// }
+//
+// // 角色检查
+// export async function checkRole(roleCode: string): Promise<boolean> {
+//   const user = await getCurrentUserCached();
+//   return user?.roles?.includes(normalizeText(roleCode)) ?? false;
+// }
+//
+// export async function checkAnyRole(roleCodes: string[]): Promise<boolean> {
+//   const user = await getCurrentUserCached();
+//   if (!user) return false;
+//   return roleCodes
+//     .map((r) => normalizeText(r))
+//     .filter(Boolean)
+//     .some((r) => user.roles?.includes(r) ?? false);
+// }
+//
+// export async function checkAllRoles(roleCodes: string[]): Promise<boolean> {
+//   const user = await getCurrentUserCached();
+//   if (!user) return false;
+//   return roleCodes
+//     .map((r) => normalizeText(r))
+//     .filter(Boolean)
+//     .every((r) => user.roles?.includes(r) ?? false);
+// }
+//
+// export async function getUserPermissions(): Promise<string[]> {
+//   const user = await getCurrentUserCached();
+//   return user?.permissions ?? [];
+// }
+//
+// export async function getUserRoles(): Promise<string[]> {
+//   const user = await getCurrentUserCached();
+//   return user?.roles ?? [];
+// }
+//
+// // ==========================
+// // 缓存管理
+// // ==========================
+// export function clearCurrentUserCache() {
+//   enhancedApi.clearCache(CURRENT_USER_CACHE_KEY);
+// }
+//
+// export function clearAuthCache() {
+//   enhancedApi.clearCache('auth:');
+// }
+//
+// export async function logoutAndClearCache(): Promise<void> {
+//   try {
+//     await logout();
+//   } finally {
+//     clearAuthCache();
+//     enhancedApi.clearCache();
+//   }
+// }

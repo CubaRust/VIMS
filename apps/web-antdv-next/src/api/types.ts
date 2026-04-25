@@ -2077,10 +2077,18 @@ export interface components {
         AnomalyTodoRow: {
             /** @example PREISSUE */
             anomaly_type: string;
+            created_at: string;
             /** Format: int64 */
             doc_id: number;
             doc_no: string;
+            /** Format: date */
+            event_date?: string | null;
+            reason?: string | null;
             status?: string | null;
+            /** Format: int64 */
+            supplier_id?: number | null;
+            timeout_flag?: boolean | null;
+            work_order_no?: string | null;
         };
         /** @description 错误响应包装 */
         ApiErrorEnvelope: {
@@ -2099,11 +2107,18 @@ export interface components {
             data?: {
                 bom_code: string;
                 bom_version: string;
+                created_at: string;
                 /** Format: int64 */
                 id: number;
                 is_active: boolean;
+                lines: components["schemas"]["BomLineView"][];
+                product_material_code?: string | null;
                 /** Format: int64 */
                 product_material_id: number;
+                remark?: string | null;
+                /** Format: int64 */
+                route_id?: number | null;
+                updated_at: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2121,8 +2136,12 @@ export interface components {
                 bom_id: number;
                 bom_version: string;
                 lines: components["schemas"]["BomRecommendLine"][];
+                product_material_code?: string | null;
                 /** Format: int64 */
                 product_material_id: number;
+                production_qty: string;
+                /** Format: int64 */
+                route_id?: number | null;
             };
             /** @description 提示信息 */
             message: string;
@@ -2135,12 +2154,26 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 /** Format: int64 */
                 customer_id: number;
+                customer_name?: string | null;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["CustomerReturnLineView"][];
+                /** Format: int64 */
+                operator_id?: number | null;
+                original_doc_no?: string | null;
+                remark?: string | null;
+                /**
+                 * Format: date
+                 * @description 退货日期，格式：YYYY-MM-DD
+                 * @example 2026-04-22
+                 */
+                return_date: string;
                 return_no: string;
+                updated_at: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2153,10 +2186,17 @@ export interface components {
              */
             code: number;
             data?: {
+                address?: string | null;
+                contact_name?: string | null;
+                contact_phone?: string | null;
+                created_at: string;
                 customer_code: string;
                 customer_name: string;
                 /** Format: int64 */
                 id: number;
+                is_active: boolean;
+                remark?: string | null;
+                updated_at: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2214,6 +2254,7 @@ export interface components {
                 found_date: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["DefectLineView"][];
                 /** Format: int64 */
                 operator_id?: number | null;
                 process_method: string;
@@ -2279,6 +2320,7 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
@@ -2290,8 +2332,17 @@ export interface components {
                 inbound_no: string;
                 inbound_type: string;
                 lines: components["schemas"]["InboundLineView"][];
+                loc_code?: string | null;
                 /** Format: int64 */
                 loc_id?: number | null;
+                /** Format: int64 */
+                operator_id?: number | null;
+                remark?: string | null;
+                /** Format: int64 */
+                supplier_id?: number | null;
+                supplier_name?: string | null;
+                updated_at: string;
+                wh_code?: string | null;
                 /** Format: int64 */
                 wh_id: number;
             };
@@ -2373,8 +2424,10 @@ export interface components {
                 permissions: string[];
                 roles: string[];
                 token: string;
+                user_code: string;
                 /** Format: int64 */
                 user_id: number;
+                user_name: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2387,13 +2440,36 @@ export interface components {
              */
             code: number;
             data?: {
+                allow_outsource_flag: boolean;
+                allow_preissue_flag: boolean;
+                allow_recovery_flag: boolean;
+                batch_required_flag: boolean;
+                brand?: string | null;
+                created_at: string;
+                /** Format: int64 */
+                default_loc_id?: number | null;
+                default_status?: string | null;
+                /** Format: int64 */
+                default_wh_id?: number | null;
+                extra_attrs: unknown;
+                has_ic_flag: boolean;
                 /** Format: int64 */
                 id: number;
                 is_active: boolean;
+                key_material_flag: boolean;
                 material_category: string;
                 material_code: string;
                 material_name: string;
+                min_stock: string;
+                process_type?: string | null;
+                public_material_flag: boolean;
+                remark?: string | null;
+                safety_stock: string;
+                short_name?: string | null;
+                spec_model?: string | null;
+                status_required_flag: boolean;
                 unit: string;
+                updated_at: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2406,11 +2482,16 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["OutboundLineView"][];
+                loc_code?: string | null;
                 /** Format: int64 */
-                loc_id: number;
+                loc_id?: number | null;
+                /** Format: int64 */
+                operator_id?: number | null;
                 /**
                  * Format: date
                  * @example 2026-04-17
@@ -2418,8 +2499,19 @@ export interface components {
                 outbound_date: string;
                 outbound_no: string;
                 outbound_type: string;
+                process_name?: string | null;
+                remark?: string | null;
+                /** Format: int64 */
+                route_id?: number | null;
+                /** Format: int64 */
+                target_object_id?: number | null;
+                target_object_type?: string | null;
+                updated_at: string;
+                wh_code?: string | null;
                 /** Format: int64 */
                 wh_id: number;
+                work_order_no?: string | null;
+                workshop_name?: string | null;
             };
             /** @description 提示信息 */
             message: string;
@@ -2432,12 +2524,28 @@ export interface components {
              */
             code: number;
             data?: {
+                back_lines: components["schemas"]["OutsourceLineView"][];
+                back_status: string;
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                /**
+                 * Format: date
+                 * @description 发料日期，格式：YYYY-MM-DD
+                 * @example 2026-04-22
+                 */
+                issue_date: string;
+                /** Format: int64 */
+                operator_id?: number | null;
                 outsource_no: string;
+                remark?: string | null;
+                send_lines: components["schemas"]["OutsourceLineView"][];
+                send_status: string;
                 /** Format: int64 */
                 supplier_id: number;
+                supplier_name?: string | null;
+                updated_at: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2451,13 +2559,36 @@ export interface components {
             code: number;
             data?: {
                 items: {
+                    allow_outsource_flag: boolean;
+                    allow_preissue_flag: boolean;
+                    allow_recovery_flag: boolean;
+                    batch_required_flag: boolean;
+                    brand?: string | null;
+                    created_at: string;
+                    /** Format: int64 */
+                    default_loc_id?: number | null;
+                    default_status?: string | null;
+                    /** Format: int64 */
+                    default_wh_id?: number | null;
+                    extra_attrs: unknown;
+                    has_ic_flag: boolean;
                     /** Format: int64 */
                     id: number;
                     is_active: boolean;
+                    key_material_flag: boolean;
                     material_category: string;
                     material_code: string;
                     material_name: string;
+                    min_stock: string;
+                    process_type?: string | null;
+                    public_material_flag: boolean;
+                    remark?: string | null;
+                    safety_stock: string;
+                    short_name?: string | null;
+                    spec_model?: string | null;
+                    status_required_flag: boolean;
                     unit: string;
+                    updated_at: string;
                 }[];
                 /** Format: int64 */
                 page: number;
@@ -2532,10 +2663,13 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
                 inputs: components["schemas"]["RecoveryInView"][];
+                /** Format: int64 */
+                operator_id?: number | null;
                 outputs: components["schemas"]["RecoveryOutView"][];
                 /**
                  * Format: date
@@ -2544,9 +2678,14 @@ export interface components {
                  */
                 recovery_date: string;
                 recovery_no: string;
+                remark?: string | null;
                 scraps: components["schemas"]["RecoveryScrapView"][];
                 /** Format: int64 */
                 source_defect_id: number;
+                source_defect_no?: string | null;
+                /** Format: int64 */
+                tpl_id?: number | null;
+                updated_at: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2559,15 +2698,18 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 /** Format: int64 */
                 id: number;
                 is_active: boolean;
                 lines: components["schemas"]["RecoveryTplLineView"][];
                 remark?: string | null;
+                source_material_code?: string | null;
                 /** Format: int64 */
                 source_material_id: number;
                 tpl_code: string;
                 tpl_name: string;
+                updated_at: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2580,12 +2722,18 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 /** Format: int64 */
                 id: number;
+                is_active: boolean;
+                product_material_code?: string | null;
                 /** Format: int64 */
                 product_material_id: number;
+                remark?: string | null;
                 route_code: string;
                 route_name: string;
+                steps: components["schemas"]["RouteStepView"][];
+                updated_at: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2607,12 +2755,27 @@ export interface components {
                  * @description 审批人 ID
                  */
                 approver_id?: number | null;
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["ScrapLineView"][];
+                /** Format: int64 */
+                operator_id?: number | null;
+                remark?: string | null;
                 /** @description 报废分类 (QUALITY_DEFECT/PROCESS_ERROR/MATERIAL_EXPIRED/DAMAGE/OBSOLETE/OTHER) */
                 scrap_category?: string | null;
+                /**
+                 * Format: date
+                 * @description 报废日期，格式：YYYY-MM-DD
+                 * @example 2026-04-22
+                 */
+                scrap_date: string;
                 scrap_no: string;
+                scrap_source: string;
+                source_doc_no?: string | null;
+                source_doc_type?: string | null;
+                updated_at: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2625,6 +2788,7 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 /** Format: int64 */
                 id: number;
                 is_active: boolean;
@@ -2645,10 +2809,28 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["StocktakeLineView"][];
+                loc_code?: string | null;
+                /** Format: int64 */
+                loc_id?: number | null;
+                /** Format: int64 */
+                operator_id?: number | null;
+                remark?: string | null;
+                /**
+                 * Format: date
+                 * @description 盘点日期，格式：YYYY-MM-DD
+                 * @example 2026-04-22
+                 */
+                stocktake_date: string;
                 stocktake_no: string;
+                updated_at: string;
+                wh_code?: string | null;
+                /** Format: int64 */
+                wh_id: number;
             };
             /** @description 提示信息 */
             message: string;
@@ -2710,12 +2892,26 @@ export interface components {
                  * @description 审批人 ID
                  */
                 approver_id?: number | null;
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["SupplierReturnLineView"][];
+                /** Format: int64 */
+                operator_id?: number | null;
+                original_doc_no?: string | null;
+                remark?: string | null;
+                /**
+                 * Format: date
+                 * @description 退货日期，格式：YYYY-MM-DD
+                 * @example 2026-04-22
+                 */
+                return_date: string;
                 return_no: string;
                 /** Format: int64 */
                 supplier_id: number;
+                supplier_name?: string | null;
+                updated_at: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2731,12 +2927,14 @@ export interface components {
                 address?: string | null;
                 contact_name?: string | null;
                 contact_phone?: string | null;
+                created_at: string;
                 /** Format: int64 */
                 id: number;
                 is_active: boolean;
                 remark?: string | null;
                 supplier_code: string;
                 supplier_name: string;
+                updated_at: string;
             };
             /** @description 提示信息 */
             message: string;
@@ -2751,10 +2949,18 @@ export interface components {
             data?: {
                 /** @example PREISSUE */
                 anomaly_type: string;
+                created_at: string;
                 /** Format: int64 */
                 doc_id: number;
                 doc_no: string;
+                /** Format: date */
+                event_date?: string | null;
+                reason?: string | null;
                 status?: string | null;
+                /** Format: int64 */
+                supplier_id?: number | null;
+                timeout_flag?: boolean | null;
+                work_order_no?: string | null;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -2794,11 +3000,18 @@ export interface components {
             data?: {
                 bom_code: string;
                 bom_version: string;
+                created_at: string;
                 /** Format: int64 */
                 id: number;
                 is_active: boolean;
+                lines: components["schemas"]["BomLineView"][];
+                product_material_code?: string | null;
                 /** Format: int64 */
                 product_material_id: number;
+                remark?: string | null;
+                /** Format: int64 */
+                route_id?: number | null;
+                updated_at: string;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -2811,12 +3024,26 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 /** Format: int64 */
                 customer_id: number;
+                customer_name?: string | null;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["CustomerReturnLineView"][];
+                /** Format: int64 */
+                operator_id?: number | null;
+                original_doc_no?: string | null;
+                remark?: string | null;
+                /**
+                 * Format: date
+                 * @description 退货日期，格式：YYYY-MM-DD
+                 * @example 2026-04-22
+                 */
+                return_date: string;
                 return_no: string;
+                updated_at: string;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -2829,10 +3056,17 @@ export interface components {
              */
             code: number;
             data?: {
+                address?: string | null;
+                contact_name?: string | null;
+                contact_phone?: string | null;
+                created_at: string;
                 customer_code: string;
                 customer_name: string;
                 /** Format: int64 */
                 id: number;
+                is_active: boolean;
+                remark?: string | null;
+                updated_at: string;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -2860,6 +3094,7 @@ export interface components {
                 found_date: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["DefectLineView"][];
                 /** Format: int64 */
                 operator_id?: number | null;
                 process_method: string;
@@ -2885,10 +3120,14 @@ export interface components {
             code: number;
             data?: {
                 defect_source?: string | null;
+                /** Format: date */
+                last_found_date?: string | null;
                 /** Format: int64 */
                 line_count: number;
                 material_code: string;
+                material_name?: string | null;
                 process_method?: string | null;
+                product_stage?: string | null;
                 total_qty: string;
             }[];
             /** @description 提示信息 */
@@ -2943,6 +3182,7 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
@@ -2954,8 +3194,17 @@ export interface components {
                 inbound_no: string;
                 inbound_type: string;
                 lines: components["schemas"]["InboundLineView"][];
+                loc_code?: string | null;
                 /** Format: int64 */
                 loc_id?: number | null;
+                /** Format: int64 */
+                operator_id?: number | null;
+                remark?: string | null;
+                /** Format: int64 */
+                supplier_id?: number | null;
+                supplier_name?: string | null;
+                updated_at: string;
+                wh_code?: string | null;
                 /** Format: int64 */
                 wh_id: number;
             }[];
@@ -2971,14 +3220,24 @@ export interface components {
             code: number;
             data?: {
                 available_qty: string;
+                bad_qty: string;
                 batch_no?: string | null;
                 book_qty: string;
+                brand?: string | null;
                 /** Format: int64 */
                 id: number;
                 loc_code: string;
+                loc_name?: string | null;
                 material_code: string;
+                material_name?: string | null;
+                occupied_qty: string;
+                pending_qty: string;
+                process_type?: string | null;
+                scrap_qty: string;
                 stock_status?: string | null;
+                updated_at: string;
                 wh_code: string;
+                wh_name?: string | null;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -2994,13 +3253,19 @@ export interface components {
                 available_qty_total: string;
                 bad_qty_total: string;
                 book_qty_total: string;
+                brand?: string | null;
                 material_category?: string | null;
                 material_code: string;
                 /** Format: int64 */
                 material_id: number;
                 material_name?: string | null;
+                min_stock?: string | null;
                 occupied_qty_total: string;
+                pending_qty_total: string;
+                process_type?: string | null;
+                safety_stock?: string | null;
                 scrap_qty_total: string;
+                unit?: string | null;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3080,11 +3345,14 @@ export interface components {
             code: number;
             data?: {
                 available_qty_total: string;
+                material_category?: string | null;
                 material_code: string;
                 /** Format: int64 */
                 material_id: number;
                 material_name?: string | null;
+                min_stock: string;
                 safety_stock: string;
+                unit?: string | null;
                 /** @example WARNING */
                 warning_level: string;
             }[];
@@ -3099,11 +3367,16 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["OutboundLineView"][];
+                loc_code?: string | null;
                 /** Format: int64 */
-                loc_id: number;
+                loc_id?: number | null;
+                /** Format: int64 */
+                operator_id?: number | null;
                 /**
                  * Format: date
                  * @example 2026-04-17
@@ -3111,8 +3384,19 @@ export interface components {
                 outbound_date: string;
                 outbound_no: string;
                 outbound_type: string;
+                process_name?: string | null;
+                remark?: string | null;
+                /** Format: int64 */
+                route_id?: number | null;
+                /** Format: int64 */
+                target_object_id?: number | null;
+                target_object_type?: string | null;
+                updated_at: string;
+                wh_code?: string | null;
                 /** Format: int64 */
                 wh_id: number;
+                work_order_no?: string | null;
+                workshop_name?: string | null;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3125,12 +3409,28 @@ export interface components {
              */
             code: number;
             data?: {
+                back_lines: components["schemas"]["OutsourceLineView"][];
+                back_status: string;
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                /**
+                 * Format: date
+                 * @description 发料日期，格式：YYYY-MM-DD
+                 * @example 2026-04-22
+                 */
+                issue_date: string;
+                /** Format: int64 */
+                operator_id?: number | null;
                 outsource_no: string;
+                remark?: string | null;
+                send_lines: components["schemas"]["OutsourceLineView"][];
+                send_status: string;
                 /** Format: int64 */
                 supplier_id: number;
+                supplier_name?: string | null;
+                updated_at: string;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3144,12 +3444,20 @@ export interface components {
             code: number;
             data?: {
                 doc_status: string;
+                /** Format: date */
+                expect_back_date?: string | null;
                 in_transit_qty: string;
                 /** Format: int64 */
                 outsource_id: number;
                 outsource_no: string;
+                process_name?: string | null;
+                /** Format: date */
+                send_date?: string | null;
+                supplier_code?: string | null;
                 supplier_name?: string | null;
+                total_received_qty: string;
                 total_sent_qty: string;
+                work_order_no?: string | null;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3192,6 +3500,7 @@ export interface components {
              */
             code: number;
             data?: {
+                action_code: string;
                 /** Format: int64 */
                 id: number;
                 module_code: string;
@@ -3247,10 +3556,13 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
                 inputs: components["schemas"]["RecoveryInView"][];
+                /** Format: int64 */
+                operator_id?: number | null;
                 outputs: components["schemas"]["RecoveryOutView"][];
                 /**
                  * Format: date
@@ -3259,9 +3571,14 @@ export interface components {
                  */
                 recovery_date: string;
                 recovery_no: string;
+                remark?: string | null;
                 scraps: components["schemas"]["RecoveryScrapView"][];
                 /** Format: int64 */
                 source_defect_id: number;
+                source_defect_no?: string | null;
+                /** Format: int64 */
+                tpl_id?: number | null;
+                updated_at: string;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3274,15 +3591,18 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 /** Format: int64 */
                 id: number;
                 is_active: boolean;
                 lines: components["schemas"]["RecoveryTplLineView"][];
                 remark?: string | null;
+                source_material_code?: string | null;
                 /** Format: int64 */
                 source_material_id: number;
                 tpl_code: string;
                 tpl_name: string;
+                updated_at: string;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3297,6 +3617,7 @@ export interface components {
             data?: {
                 /** Format: int64 */
                 id: number;
+                is_active: boolean;
                 role_code: string;
                 role_name: string;
             }[];
@@ -3311,12 +3632,18 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 /** Format: int64 */
                 id: number;
+                is_active: boolean;
+                product_material_code?: string | null;
                 /** Format: int64 */
                 product_material_id: number;
+                remark?: string | null;
                 route_code: string;
                 route_name: string;
+                steps: components["schemas"]["RouteStepView"][];
+                updated_at: string;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3338,12 +3665,27 @@ export interface components {
                  * @description 审批人 ID
                  */
                 approver_id?: number | null;
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["ScrapLineView"][];
+                /** Format: int64 */
+                operator_id?: number | null;
+                remark?: string | null;
                 /** @description 报废分类 (QUALITY_DEFECT/PROCESS_ERROR/MATERIAL_EXPIRED/DAMAGE/OBSOLETE/OTHER) */
                 scrap_category?: string | null;
+                /**
+                 * Format: date
+                 * @description 报废日期，格式：YYYY-MM-DD
+                 * @example 2026-04-22
+                 */
+                scrap_date: string;
                 scrap_no: string;
+                scrap_source: string;
+                source_doc_no?: string | null;
+                source_doc_type?: string | null;
+                updated_at: string;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3356,6 +3698,7 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 /** Format: int64 */
                 id: number;
                 is_active: boolean;
@@ -3376,10 +3719,28 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["StocktakeLineView"][];
+                loc_code?: string | null;
+                /** Format: int64 */
+                loc_id?: number | null;
+                /** Format: int64 */
+                operator_id?: number | null;
+                remark?: string | null;
+                /**
+                 * Format: date
+                 * @description 盘点日期，格式：YYYY-MM-DD
+                 * @example 2026-04-22
+                 */
+                stocktake_date: string;
                 stocktake_no: string;
+                updated_at: string;
+                wh_code?: string | null;
+                /** Format: int64 */
+                wh_id: number;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3401,12 +3762,26 @@ export interface components {
                  * @description 审批人 ID
                  */
                 approver_id?: number | null;
+                created_at: string;
                 doc_status: string;
                 /** Format: int64 */
                 id: number;
+                lines: components["schemas"]["SupplierReturnLineView"][];
+                /** Format: int64 */
+                operator_id?: number | null;
+                original_doc_no?: string | null;
+                remark?: string | null;
+                /**
+                 * Format: date
+                 * @description 退货日期，格式：YYYY-MM-DD
+                 * @example 2026-04-22
+                 */
+                return_date: string;
                 return_no: string;
                 /** Format: int64 */
                 supplier_id: number;
+                supplier_name?: string | null;
+                updated_at: string;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3422,12 +3797,14 @@ export interface components {
                 address?: string | null;
                 contact_name?: string | null;
                 contact_phone?: string | null;
+                created_at: string;
                 /** Format: int64 */
                 id: number;
                 is_active: boolean;
                 remark?: string | null;
                 supplier_code: string;
                 supplier_name: string;
+                updated_at: string;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3440,13 +3817,28 @@ export interface components {
              */
             code: number;
             data?: {
+                batch_no?: string | null;
+                doc_no?: string | null;
+                doc_type?: string | null;
                 io_flag: string;
                 material_code: string;
+                /** Format: int64 */
+                material_id: number;
+                material_name?: string | null;
+                operate_time: string;
+                /** Format: int64 */
+                operator_id?: number | null;
                 qty: string;
+                scene_code: string;
+                /** Format: int64 */
+                source_wh_id?: number | null;
+                /** Format: int64 */
+                target_wh_id?: number | null;
                 /** Format: int64 */
                 txn_id: number;
                 txn_no: string;
                 txn_type: string;
+                unit: string;
             }[];
             /** @description 提示信息 */
             message: string;
@@ -3498,10 +3890,14 @@ export interface components {
              */
             code: number;
             data?: {
+                created_at: string;
                 /** Format: int64 */
                 id: number;
                 is_active: boolean;
                 login_name: string;
+                mobile?: string | null;
+                roles: string[];
+                updated_at: string;
                 user_code: string;
                 user_name: string;
             }[];
@@ -3649,6 +4045,30 @@ export interface components {
             /** Format: int64 */
             wh_id: number;
         };
+        BatchOutboundBody: {
+            /** Format: int64 */
+            loc_id: number;
+            materials: components["schemas"]["BatchOutboundMaterial"][];
+            /**
+             * Format: date
+             * @example 2026-04-17
+             */
+            outbound_date: string;
+            /** @example PROD_ISSUE */
+            outbound_type: string;
+            remark?: string | null;
+            /** Format: int64 */
+            wh_id: number;
+            work_order_no?: string | null;
+        };
+        BatchOutboundMaterial: {
+            batch_no: string;
+            /** Format: int64 */
+            material_id: number;
+            qty: string;
+            stock_status: string;
+            unit: string;
+        };
         BomCreateBody: {
             bom_code: string;
             bom_version: string;
@@ -3666,20 +4086,42 @@ export interface components {
         BomHeadView: {
             bom_code: string;
             bom_version: string;
+            created_at: string;
             /** Format: int64 */
             id: number;
             is_active: boolean;
+            lines: components["schemas"]["BomLineView"][];
+            product_material_code?: string | null;
             /** Format: int64 */
             product_material_id: number;
+            remark?: string | null;
+            /** Format: int64 */
+            route_id?: number | null;
+            updated_at: string;
+        };
+        BomLineView: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            line_no: number;
+            loss_rate: string;
+            material_code?: string | null;
+            /** Format: int64 */
+            material_id: number;
+            public_material_flag: boolean;
+            remark?: string | null;
+            usage_qty: string;
         };
         BomRecommendLine: {
             /** Format: int32 */
             line_no: number;
+            loss_rate: string;
             material_code?: string | null;
             /** Format: int64 */
             material_id: number;
             public_material_flag: boolean;
             recommend_qty: string;
+            remark?: string | null;
             usage_qty: string;
         };
         BomRecommendResult: {
@@ -3688,8 +4130,12 @@ export interface components {
             bom_id: number;
             bom_version: string;
             lines: components["schemas"]["BomRecommendLine"][];
+            product_material_code?: string | null;
             /** Format: int64 */
             product_material_id: number;
+            production_qty: string;
+            /** Format: int64 */
+            route_id?: number | null;
         };
         BomUpdateBody: {
             bom_version: string;
@@ -3732,12 +4178,42 @@ export interface components {
             return_wh_id: number;
         };
         CustomerReturnHeadView: {
+            created_at: string;
             /** Format: int64 */
             customer_id: number;
+            customer_name?: string | null;
             doc_status: string;
             /** Format: int64 */
             id: number;
+            lines: components["schemas"]["CustomerReturnLineView"][];
+            /** Format: int64 */
+            operator_id?: number | null;
+            original_doc_no?: string | null;
+            remark?: string | null;
+            /**
+             * Format: date
+             * @description 退货日期，格式：YYYY-MM-DD
+             * @example 2026-04-22
+             */
+            return_date: string;
             return_no: string;
+            updated_at: string;
+        };
+        CustomerReturnLineView: {
+            batch_no: string;
+            /** Format: int64 */
+            id: number;
+            judge_method?: string | null;
+            judge_note?: string | null;
+            /** Format: int32 */
+            line_no: number;
+            material_code?: string | null;
+            /** Format: int64 */
+            material_id: number;
+            note?: string | null;
+            qty: string;
+            return_reason: string;
+            unit: string;
         };
         CustomerReturnUpdateBody: {
             /** Format: int64 */
@@ -3767,10 +4243,17 @@ export interface components {
             remark?: string | null;
         };
         CustomerView: {
+            address?: string | null;
+            contact_name?: string | null;
+            contact_phone?: string | null;
+            created_at: string;
             customer_code: string;
             customer_name: string;
             /** Format: int64 */
             id: number;
+            is_active: boolean;
+            remark?: string | null;
+            updated_at: string;
         };
         DashboardData: {
             /** Format: int64 */
@@ -3834,6 +4317,7 @@ export interface components {
             found_date: string;
             /** Format: int64 */
             id: number;
+            lines: components["schemas"]["DefectLineView"][];
             /** Format: int64 */
             operator_id?: number | null;
             process_method: string;
@@ -3847,12 +4331,34 @@ export interface components {
             updated_at: string;
             work_order_no?: string | null;
         };
+        DefectLineView: {
+            batch_no: string;
+            defect_desc?: string | null;
+            defect_reason: string;
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            line_no: number;
+            material_code?: string | null;
+            /** Format: int64 */
+            material_id: number;
+            note?: string | null;
+            qty: string;
+            source_doc_no?: string | null;
+            source_doc_type?: string | null;
+            target_status?: string | null;
+            unit: string;
+        };
         DefectStats30dRow: {
             defect_source?: string | null;
+            /** Format: date */
+            last_found_date?: string | null;
             /** Format: int64 */
             line_count: number;
             material_code: string;
+            material_name?: string | null;
             process_method?: string | null;
+            product_stage?: string | null;
             total_qty: string;
         };
         DefectUpdateBody: {
@@ -3951,6 +4457,7 @@ export interface components {
             work_order_no?: string | null;
         };
         InboundHeadView: {
+            created_at: string;
             doc_status: string;
             /** Format: int64 */
             id: number;
@@ -3962,8 +4469,17 @@ export interface components {
             inbound_no: string;
             inbound_type: string;
             lines: components["schemas"]["InboundLineView"][];
+            loc_code?: string | null;
             /** Format: int64 */
             loc_id?: number | null;
+            /** Format: int64 */
+            operator_id?: number | null;
+            remark?: string | null;
+            /** Format: int64 */
+            supplier_id?: number | null;
+            supplier_name?: string | null;
+            updated_at: string;
+            wh_code?: string | null;
             /** Format: int64 */
             wh_id: number;
         };
@@ -3973,11 +4489,18 @@ export interface components {
             id: number;
             /** Format: int32 */
             line_no: number;
+            material_code?: string | null;
             /** Format: int64 */
             material_id: number;
+            note?: string | null;
+            outsource_no?: string | null;
+            process_name?: string | null;
             qty: string;
+            /** Format: int64 */
+            related_preissue_line_id?: number | null;
             stock_status: string;
             unit: string;
+            work_order_no?: string | null;
         };
         InboundPrintData: {
             head: components["schemas"]["InboundHeadView"];
@@ -4012,26 +4535,42 @@ export interface components {
         };
         InventoryByLocationRow: {
             available_qty: string;
+            bad_qty: string;
             batch_no?: string | null;
             book_qty: string;
+            brand?: string | null;
             /** Format: int64 */
             id: number;
             loc_code: string;
+            loc_name?: string | null;
             material_code: string;
+            material_name?: string | null;
+            occupied_qty: string;
+            pending_qty: string;
+            process_type?: string | null;
+            scrap_qty: string;
             stock_status?: string | null;
+            updated_at: string;
             wh_code: string;
+            wh_name?: string | null;
         };
         InventoryByMaterialRow: {
             available_qty_total: string;
             bad_qty_total: string;
             book_qty_total: string;
+            brand?: string | null;
             material_category?: string | null;
             material_code: string;
             /** Format: int64 */
             material_id: number;
             material_name?: string | null;
+            min_stock?: string | null;
             occupied_qty_total: string;
+            pending_qty_total: string;
+            process_type?: string | null;
+            safety_stock?: string | null;
             scrap_qty_total: string;
+            unit?: string | null;
         };
         JudgeBody: {
             judge_method: string;
@@ -4094,16 +4633,21 @@ export interface components {
             permissions: string[];
             roles: string[];
             token: string;
+            user_code: string;
             /** Format: int64 */
             user_id: number;
+            user_name: string;
         };
         LowStockWarningRow: {
             available_qty_total: string;
+            material_category?: string | null;
             material_code: string;
             /** Format: int64 */
             material_id: number;
             material_name?: string | null;
+            min_stock: string;
             safety_stock: string;
+            unit?: string | null;
             /** @example WARNING */
             warning_level: string;
         };
@@ -4124,13 +4668,36 @@ export interface components {
             unit: string;
         };
         MaterialView: {
+            allow_outsource_flag: boolean;
+            allow_preissue_flag: boolean;
+            allow_recovery_flag: boolean;
+            batch_required_flag: boolean;
+            brand?: string | null;
+            created_at: string;
+            /** Format: int64 */
+            default_loc_id?: number | null;
+            default_status?: string | null;
+            /** Format: int64 */
+            default_wh_id?: number | null;
+            extra_attrs: unknown;
+            has_ic_flag: boolean;
             /** Format: int64 */
             id: number;
             is_active: boolean;
+            key_material_flag: boolean;
             material_category: string;
             material_code: string;
             material_name: string;
+            min_stock: string;
+            process_type?: string | null;
+            public_material_flag: boolean;
+            remark?: string | null;
+            safety_stock: string;
+            short_name?: string | null;
+            spec_model?: string | null;
+            status_required_flag: boolean;
             unit: string;
+            updated_at: string;
         };
         OutboundCreateBody: {
             lines: components["schemas"]["OutboundCreateLine"][];
@@ -4159,11 +4726,16 @@ export interface components {
             unit: string;
         };
         OutboundHeadView: {
+            created_at: string;
             doc_status: string;
             /** Format: int64 */
             id: number;
+            lines: components["schemas"]["OutboundLineView"][];
+            loc_code?: string | null;
             /** Format: int64 */
-            loc_id: number;
+            loc_id?: number | null;
+            /** Format: int64 */
+            operator_id?: number | null;
             /**
              * Format: date
              * @example 2026-04-17
@@ -4171,8 +4743,64 @@ export interface components {
             outbound_date: string;
             outbound_no: string;
             outbound_type: string;
+            process_name?: string | null;
+            remark?: string | null;
+            /** Format: int64 */
+            route_id?: number | null;
+            /** Format: int64 */
+            target_object_id?: number | null;
+            target_object_type?: string | null;
+            updated_at: string;
+            wh_code?: string | null;
             /** Format: int64 */
             wh_id: number;
+            work_order_no?: string | null;
+            workshop_name?: string | null;
+        };
+        OutboundLineView: {
+            actual_qty: string;
+            batch_no: string;
+            bom_recommended_flag: boolean;
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            line_no: number;
+            material_code?: string | null;
+            /** Format: int64 */
+            material_id: number;
+            note?: string | null;
+            preissue_flag: boolean;
+            public_material_flag: boolean;
+            stock_status: string;
+            suggest_qty: string;
+            unit: string;
+        };
+        OutboundPrintData: {
+            head: components["schemas"]["OutboundHeadView"];
+            print_time: string;
+            print_user: string;
+            /** Format: int32 */
+            total_lines: number;
+            /** Format: int32 */
+            total_materials: number;
+            total_qty: string;
+        };
+        OutboundUpdateBody: {
+            lines: components["schemas"]["OutboundCreateLine"][];
+            /** Format: int64 */
+            loc_id: number;
+            /**
+             * Format: date
+             * @example 2026-04-17
+             */
+            outbound_date: string;
+            /** @example PROD_ISSUE */
+            outbound_type: string;
+            process_name?: string | null;
+            remark?: string | null;
+            /** Format: int64 */
+            wh_id: number;
+            work_order_no?: string | null;
         };
         OutsourceBackBody: {
             back_lines: components["schemas"]["OutsourceBackLine"][];
@@ -4198,21 +4826,45 @@ export interface components {
             supplier_id: number;
         };
         OutsourceHeadView: {
+            back_lines: components["schemas"]["OutsourceLineView"][];
+            back_status: string;
+            created_at: string;
             doc_status: string;
             /** Format: int64 */
             id: number;
+            /**
+             * Format: date
+             * @description 发料日期，格式：YYYY-MM-DD
+             * @example 2026-04-22
+             */
+            issue_date: string;
+            /** Format: int64 */
+            operator_id?: number | null;
             outsource_no: string;
+            remark?: string | null;
+            send_lines: components["schemas"]["OutsourceLineView"][];
+            send_status: string;
             /** Format: int64 */
             supplier_id: number;
+            supplier_name?: string | null;
+            updated_at: string;
         };
         OutsourceInTransitRow: {
             doc_status: string;
+            /** Format: date */
+            expect_back_date?: string | null;
             in_transit_qty: string;
             /** Format: int64 */
             outsource_id: number;
             outsource_no: string;
+            process_name?: string | null;
+            /** Format: date */
+            send_date?: string | null;
+            supplier_code?: string | null;
             supplier_name?: string | null;
+            total_received_qty: string;
             total_sent_qty: string;
+            work_order_no?: string | null;
         };
         OutsourceInTransitView: {
             back_status: string;
@@ -4234,6 +4886,20 @@ export interface components {
             total_back_qty: string;
             total_sent_qty: string;
         };
+        OutsourceLineView: {
+            actual_qty: string;
+            batch_no: string;
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            line_no: number;
+            material_code?: string | null;
+            /** Format: int64 */
+            material_id: number;
+            note?: string | null;
+            qty: string;
+            unit: string;
+        };
         OutsourceUpdateBody: {
             /** Format: int64 */
             back_loc_id?: number | null;
@@ -4250,13 +4916,36 @@ export interface components {
         };
         PageResponse_MaterialView: {
             items: {
+                allow_outsource_flag: boolean;
+                allow_preissue_flag: boolean;
+                allow_recovery_flag: boolean;
+                batch_required_flag: boolean;
+                brand?: string | null;
+                created_at: string;
+                /** Format: int64 */
+                default_loc_id?: number | null;
+                default_status?: string | null;
+                /** Format: int64 */
+                default_wh_id?: number | null;
+                extra_attrs: unknown;
+                has_ic_flag: boolean;
                 /** Format: int64 */
                 id: number;
                 is_active: boolean;
+                key_material_flag: boolean;
                 material_category: string;
                 material_code: string;
                 material_name: string;
+                min_stock: string;
+                process_type?: string | null;
+                public_material_flag: boolean;
+                remark?: string | null;
+                safety_stock: string;
+                short_name?: string | null;
+                spec_model?: string | null;
+                status_required_flag: boolean;
                 unit: string;
+                updated_at: string;
             }[];
             /** Format: int64 */
             page: number;
@@ -4266,6 +4955,7 @@ export interface components {
             total: number;
         };
         PermissionView: {
+            action_code: string;
             /** Format: int64 */
             id: number;
             module_code: string;
@@ -4465,10 +5155,13 @@ export interface components {
             unit: string;
         };
         RecoveryHeadView: {
+            created_at: string;
             doc_status: string;
             /** Format: int64 */
             id: number;
             inputs: components["schemas"]["RecoveryInView"][];
+            /** Format: int64 */
+            operator_id?: number | null;
             outputs: components["schemas"]["RecoveryOutView"][];
             /**
              * Format: date
@@ -4477,9 +5170,14 @@ export interface components {
              */
             recovery_date: string;
             recovery_no: string;
+            remark?: string | null;
             scraps: components["schemas"]["RecoveryScrapView"][];
             /** Format: int64 */
             source_defect_id: number;
+            source_defect_no?: string | null;
+            /** Format: int64 */
+            tpl_id?: number | null;
+            updated_at: string;
         };
         RecoveryInView: {
             batch_no: string;
@@ -4554,15 +5252,18 @@ export interface components {
             target_material_id?: number | null;
         };
         RecoveryTplHeadView: {
+            created_at: string;
             /** Format: int64 */
             id: number;
             is_active: boolean;
             lines: components["schemas"]["RecoveryTplLineView"][];
             remark?: string | null;
+            source_material_code?: string | null;
             /** Format: int64 */
             source_material_id: number;
             tpl_code: string;
             tpl_name: string;
+            updated_at: string;
         };
         RecoveryTplLineView: {
             default_recovery_qty: string;
@@ -4616,6 +5317,7 @@ export interface components {
         RoleView: {
             /** Format: int64 */
             id: number;
+            is_active: boolean;
             role_code: string;
             role_name: string;
         };
@@ -4626,12 +5328,31 @@ export interface components {
             route_name: string;
         };
         RouteHeadView: {
+            created_at: string;
             /** Format: int64 */
             id: number;
+            is_active: boolean;
+            product_material_code?: string | null;
             /** Format: int64 */
             product_material_id: number;
+            remark?: string | null;
             route_code: string;
             route_name: string;
+            steps: components["schemas"]["RouteStepView"][];
+            updated_at: string;
+        };
+        RouteStepView: {
+            /** Format: int64 */
+            id: number;
+            output_material_code?: string | null;
+            /** Format: int64 */
+            output_material_id?: number | null;
+            process_name: string;
+            remark?: string | null;
+            rule_json: unknown;
+            semi_finished_flag: boolean;
+            /** Format: int32 */
+            step_no: number;
         };
         RouteUpdateBody: {
             is_active: boolean;
@@ -4658,12 +5379,42 @@ export interface components {
              * @description 审批人 ID
              */
             approver_id?: number | null;
+            created_at: string;
             doc_status: string;
             /** Format: int64 */
             id: number;
+            lines: components["schemas"]["ScrapLineView"][];
+            /** Format: int64 */
+            operator_id?: number | null;
+            remark?: string | null;
             /** @description 报废分类 (QUALITY_DEFECT/PROCESS_ERROR/MATERIAL_EXPIRED/DAMAGE/OBSOLETE/OTHER) */
             scrap_category?: string | null;
+            /**
+             * Format: date
+             * @description 报废日期，格式：YYYY-MM-DD
+             * @example 2026-04-22
+             */
+            scrap_date: string;
             scrap_no: string;
+            scrap_source: string;
+            source_doc_no?: string | null;
+            source_doc_type?: string | null;
+            updated_at: string;
+        };
+        ScrapLineView: {
+            batch_no: string;
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            line_no: number;
+            material_code?: string | null;
+            /** Format: int64 */
+            material_id?: number | null;
+            note?: string | null;
+            qty: string;
+            scrap_reason: string;
+            stock_status?: string | null;
+            unit: string;
         };
         ScrapUpdateBody: {
             remark?: string | null;
@@ -4687,6 +5438,7 @@ export interface components {
             target_status: string;
         };
         StatusFlowView: {
+            created_at: string;
             /** Format: int64 */
             id: number;
             is_active: boolean;
@@ -4724,16 +5476,51 @@ export interface components {
             wh_id: number;
         };
         StocktakeHeadView: {
+            created_at: string;
             doc_status: string;
             /** Format: int64 */
             id: number;
+            lines: components["schemas"]["StocktakeLineView"][];
+            loc_code?: string | null;
+            /** Format: int64 */
+            loc_id?: number | null;
+            /** Format: int64 */
+            operator_id?: number | null;
+            remark?: string | null;
+            /**
+             * Format: date
+             * @description 盘点日期，格式：YYYY-MM-DD
+             * @example 2026-04-22
+             */
+            stocktake_date: string;
             stocktake_no: string;
+            updated_at: string;
+            wh_code?: string | null;
+            /** Format: int64 */
+            wh_id: number;
         };
         StocktakeLineInput: {
             batch_no: string;
             book_qty: string;
             /** Format: int32 */
             line_no: number;
+            /** Format: int64 */
+            material_id: number;
+            note?: string | null;
+            stock_status: string;
+            unit: string;
+        };
+        StocktakeLineView: {
+            actual_qty?: string | null;
+            batch_no: string;
+            book_qty: string;
+            counted: boolean;
+            diff_qty?: string | null;
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            line_no: number;
+            material_code?: string | null;
             /** Format: int64 */
             material_id: number;
             note?: string | null;
@@ -4815,12 +5602,41 @@ export interface components {
              * @description 审批人 ID
              */
             approver_id?: number | null;
+            created_at: string;
             doc_status: string;
             /** Format: int64 */
             id: number;
+            lines: components["schemas"]["SupplierReturnLineView"][];
+            /** Format: int64 */
+            operator_id?: number | null;
+            original_doc_no?: string | null;
+            remark?: string | null;
+            /**
+             * Format: date
+             * @description 退货日期，格式：YYYY-MM-DD
+             * @example 2026-04-22
+             */
+            return_date: string;
             return_no: string;
             /** Format: int64 */
             supplier_id: number;
+            supplier_name?: string | null;
+            updated_at: string;
+        };
+        SupplierReturnLineView: {
+            batch_no: string;
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            line_no: number;
+            material_code?: string | null;
+            /** Format: int64 */
+            material_id: number;
+            note?: string | null;
+            qty: string;
+            return_reason: string;
+            source_status: string;
+            unit: string;
         };
         SupplierReturnUpdateBody: {
             original_doc_no?: string | null;
@@ -4846,21 +5662,38 @@ export interface components {
             address?: string | null;
             contact_name?: string | null;
             contact_phone?: string | null;
+            created_at: string;
             /** Format: int64 */
             id: number;
             is_active: boolean;
             remark?: string | null;
             supplier_code: string;
             supplier_name: string;
+            updated_at: string;
         };
         TodayIoRow: {
+            batch_no?: string | null;
+            doc_no?: string | null;
+            doc_type?: string | null;
             io_flag: string;
             material_code: string;
+            /** Format: int64 */
+            material_id: number;
+            material_name?: string | null;
+            operate_time: string;
+            /** Format: int64 */
+            operator_id?: number | null;
             qty: string;
+            scene_code: string;
+            /** Format: int64 */
+            source_wh_id?: number | null;
+            /** Format: int64 */
+            target_wh_id?: number | null;
             /** Format: int64 */
             txn_id: number;
             txn_no: string;
             txn_type: string;
+            unit: string;
         };
         ToggleStatusRequest: {
             /** @example true */
@@ -4886,10 +5719,14 @@ export interface components {
             qty: string;
         };
         UserView: {
+            created_at: string;
             /** Format: int64 */
             id: number;
             is_active: boolean;
             login_name: string;
+            mobile?: string | null;
+            roles: string[];
+            updated_at: string;
             user_code: string;
             user_name: string;
         };

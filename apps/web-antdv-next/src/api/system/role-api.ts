@@ -1,147 +1,139 @@
-/**
- * 角色管理 API
- *
- * 提供角色列表查询功能
- */
+// ==========================
+// role-api.ts 安全完整版本
+// ==========================
 
-import type { Schema } from '../shared/helpers';
-import { api } from '../shared/client-factory';
-import { enhancedApi } from '../shared/enhanced-client';
+import type { Schema } from '#/api';
+import { api } from '#/api';
+import { enhancedApi } from '#/api';
 
-// ============================================================================
+// ==========================
 // 类型定义
-// ============================================================================
-
+// ==========================
 export type RoleView = Schema<'RoleView'>;
 
-// ============================================================================
+export type RoleWithStatusView = RoleView & {
+  is_active?: boolean;
+};
+
+export interface RoleStats {
+  total: number;
+  active: number;
+  inactive: number;
+}
+
+// ==========================
+// 工具函数
+// ==========================
+function normalizeText(value: string) {
+  return value.trim();
+}
+
+function isRoleActive(role: RoleWithStatusView): boolean {
+  return role.is_active !== false;
+}
+
+// ==========================
 // 基础操作
-// ============================================================================
-
-/**
- * 获取角色列表
- *
- * @example
- * const roles = await listRoles()
- */
-export async function listRoles() {
-  return api.get('/api/v1/roles') as Promise<RoleView[]>;
+// ==========================
+export async function listRoles(): Promise<RoleWithStatusView[]> {
+  try {
+    const result = await api.get('/roles'); // 注意去掉 /api，代理会自动加 /api/v1
+    if (!Array.isArray(result)) throw new Error('返回数据不是数组');
+    return result;
+  } catch (err) {
+    console.error('listRoles error:', err);
+    return [];
+  }
 }
 
-// ============================================================================
-// 业务逻辑封装（使用 enhancedApi）
-// ============================================================================
-
-/**
- * 获取角色列表（带缓存）
- *
- * @example
- * const roles = await getRolesCached()
- */
-export async function getRolesCached() {
-  return enhancedApi.get('/api/v1/roles', {
-    cache: { ttl: 10 * 60 * 1000 }, // 缓存 10 分钟（角色变化较少）
-    label: '获取角色列表',
-  }) as Promise<RoleView[]>;
+export async function getRolesCached(): Promise<RoleWithStatusView[]> {
+  try {
+    const result = await enhancedApi.get('/roles', {
+      cache: { ttl: 10 * 60 * 1000, key: 'roles:list' },
+      label: '获取角色列表',
+    });
+    if (!Array.isArray(result)) throw new Error('返回数据不是数组');
+    return result;
+  } catch (err) {
+    console.error('getRolesCached error:', err);
+    return [];
+  }
 }
 
-/**
- * 获取启用的角色列表
- *
- * @example
- * const activeRoles = await getActiveRoles()
- */
-export async function getActiveRoles() {
+export async function getActiveRoles(): Promise<RoleWithStatusView[]> {
   const roles = await getRolesCached();
-  return roles.filter(r => r.is_active);
+  return roles.filter(isRoleActive);
 }
 
-/**
- * 按角色代码查找角色
- *
- * @example
- * const role = await findRoleByCode('admin')
- */
-export async function findRoleByCode(roleCode: string): Promise<RoleView | null> {
+export async function findRoleByCode(
+  roleCode: string
+): Promise<RoleWithStatusView | null> {
+  const code = normalizeText(roleCode);
+  if (!code) return null;
+
   try {
     const roles = await getRolesCached();
-    return roles.find(r => r.role_code === roleCode) || null;
-  } catch {
+    return roles.find((r) => r.role_code === code) ?? null;
+  } catch (err) {
+    console.error('findRoleByCode error:', err);
     return null;
   }
 }
 
-/**
- * 按角色名称搜索
- *
- * @example
- * const roles = await searchRolesByName('管理')
- */
-export async function searchRolesByName(keyword: string) {
-  if (!keyword.trim()) {
+export async function searchRolesByName(
+  keyword: string
+): Promise<RoleWithStatusView[]> {
+  const key = normalizeText(keyword);
+  if (!key) return [];
+
+  try {
+    const roles = await getRolesCached();
+    return roles.filter(
+      (r) => r.role_name.includes(key) || r.role_code.includes(key)
+    );
+  } catch (err) {
+    console.error('searchRolesByName error:', err);
     return [];
   }
-
-  const roles = await getRolesCached();
-  return roles.filter(r =>
-    r.role_name.includes(keyword) || r.role_code.includes(keyword)
-  );
 }
 
-/**
- * 检查角色代码是否存在
- *
- * @example
- * const exists = await checkRoleCodeExists('admin')
- */
 export async function checkRoleCodeExists(roleCode: string): Promise<boolean> {
+  const role = await findRoleByCode(roleCode);
+  return role !== null;
+}
+
+export async function getRoleStats(): Promise<RoleStats> {
   try {
-    const role = await findRoleByCode(roleCode);
-    return role !== null;
-  } catch {
-    return false;
+    const roles = await enhancedApi.get('/roles', {
+      cache: { ttl: 10 * 60 * 1000, key: 'roles:stats' },
+      retry: { times: 3, delay: 1000 },
+      label: '获取角色统计',
+    });
+    if (!Array.isArray(roles)) throw new Error('返回数据不是数组');
+
+    const active = roles.filter(isRoleActive).length;
+    const inactive = roles.filter((r) => r.is_active === false).length;
+
+    return { total: roles.length, active, inactive };
+  } catch (err) {
+    console.error('getRoleStats error:', err);
+    return { total: 0, active: 0, inactive: 0 };
   }
 }
 
-/**
- * 获取角色统计信息（带重试）
- *
- * @example
- * const stats = await getRoleStats()
- */
-export async function getRoleStats() {
-  const result = await enhancedApi.get('/api/v1/roles', {
-    retry: { times: 3, delay: 1000 },
-    cache: { ttl: 10 * 60 * 1000 },
-    label: '获取角色统计',
-  }) as RoleView[];
-
-  return {
-    total: result.length,
-    active: result.filter(r => r.is_active).length,
-    inactive: result.filter(r => !r.is_active).length,
-  };
-}
-
-/**
- * 预加载角色数据（后台加载）
- *
- * @example
- * preloadRoles()
- */
 export function preloadRoles() {
-  getRolesCached().catch(() => {
-    // 忽略错误
-  });
+  void getRolesCached().catch((err) => console.error('preloadRoles error:', err));
 }
 
-// ============================================================================
+// ==========================
 // 缓存管理
-// ============================================================================
-
-/**
- * 清除角色相关缓存
- */
+// ==========================
 export function clearRoleCache() {
-  enhancedApi.clearCache('roles');
+  enhancedApi.clearCache('roles:');
+}
+export function clearRoleListCache() {
+  enhancedApi.clearCache('roles:list');
+}
+export function clearRoleStatsCache() {
+  enhancedApi.clearCache('roles:stats');
 }
