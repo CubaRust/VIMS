@@ -21,7 +21,7 @@ export namespace UserApi {
  * 获取用户信息
  */
 export async function getUserInfoApi() {
-  const me = await requestClient.get<UserApi.MeResponse>('/auth/me');
+  const me = await requestClient.get<UserApi.MeResponse>('/api/v1/auth/me');
 
   return {
     userId: String(me.id),

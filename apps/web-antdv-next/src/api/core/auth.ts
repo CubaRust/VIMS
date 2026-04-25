@@ -40,14 +40,14 @@ export namespace AuthApi {
  * 登录
  */
 export async function loginApi(data: AuthApi.LoginParams) {
-  return requestClient.post<AuthApi.LoginResult>('/auth/login', data);
+  return requestClient.post<AuthApi.LoginResult>('/api/v1/auth/login', data);
 }
 
 /**
  * 刷新accessToken
  */
 export async function refreshTokenApi(token?: null | string) {
-  return baseRequestClient.post<AuthApi.RefreshTokenResult>('/auth/refresh', {
+  return baseRequestClient.post<AuthApi.RefreshTokenResult>('/api/v1/auth/refresh', {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     withCredentials: true,
   });
@@ -57,7 +57,7 @@ export async function refreshTokenApi(token?: null | string) {
  * 退出登录
  */
 export async function logoutApi() {
-  return requestClient.post('/auth/logout');
+  return requestClient.post('/api/v1/auth/logout');
 }
 
 /**
@@ -65,6 +65,6 @@ export async function logoutApi() {
  * 注意: 权限码已在登录时返回，此接口保留用于需要刷新权限的场景
  */
 export async function getAccessCodesApi() {
-  const me = await requestClient.get<{ permissions: string[] }>('/auth/me');
+  const me = await requestClient.get<{ permissions: string[] }>('/api/v1/auth/me');
   return me.permissions || [];
 }
