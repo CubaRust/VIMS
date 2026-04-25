@@ -32,7 +32,7 @@ export interface PermissionStats {
  * const permissions = await listPermissions()
  */
 export async function listPermissions(): Promise<PermissionView[]> {
-  return api.get('/api/v1/permissions') as Promise<PermissionView[]>;
+  return enhancedApi.get('/api/v1/permissions') as Promise<PermissionView[]>;
 }
 
 // ============================================================================

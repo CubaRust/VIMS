@@ -3,8 +3,7 @@
 // ==========================
 
 import type { Schema } from '#/api';
-import { api } from '#/api';
-import { enhancedApi } from '#/api';
+import { api, enhancedApi } from '#/api';
 
 // ==========================
 // 类型定义
@@ -13,7 +12,29 @@ export type RoleView = Schema<'RoleView'>;
 
 export type RoleWithStatusView = RoleView & {
   is_active?: boolean;
+  user_count?: number;
+  permission_ids?: number[];
+  description?: string;
 };
+
+export interface RoleCreateParams {
+  role_code: string;
+  role_name: string;
+  description?: string;
+  is_active?: boolean;
+}
+
+export interface RoleUpdateParams {
+  role_id: number;
+  role_name?: string;
+  description?: string;
+  is_active?: boolean;
+}
+
+export interface RolePermissionParams {
+  role_id: number;
+  permission_ids: number[];
+}
 
 export interface RoleStats {
   total: number;
@@ -33,22 +54,86 @@ function isRoleActive(role: RoleWithStatusView): boolean {
 }
 
 // ==========================
-// 基础操作
+// 基础 CRUD 操作
 // ==========================
+
+/**
+ * 获取角色列表
+ */
 export async function listRoles(): Promise<RoleWithStatusView[]> {
   try {
-    const result = await api.get('/roles'); // 注意去掉 /api，代理会自动加 /api/v1
-    if (!Array.isArray(result)) throw new Error('返回数据不是数组');
-    return result;
+    const result = await enhancedApi.get('/api/v1/roles');
+
+    if (!Array.isArray(result)) {
+      throw new Error('返回数据不是数组');
+    }
+    return result as RoleWithStatusView[];
   } catch (err) {
     console.error('listRoles error:', err);
     return [];
   }
 }
 
+/**
+ * 获取角色详情
+ */
+export async function getRoleDetail(roleId: number): Promise<RoleWithStatusView | null> {
+  try {
+    const result = await api.get(`/api/v1/roles/${roleId}` as any);
+    if (!result) throw new Error('角色不存在');
+    return result as RoleWithStatusView;
+  } catch (err) {
+    console.error('getRoleDetail error:', err);
+    return null;
+  }
+}
+
+/**
+ * 创建角色
+ */
+export async function createRole(params: RoleCreateParams): Promise<RoleWithStatusView> {
+  return api.post('/api/v1/roles' as any, params) as Promise<RoleWithStatusView>;
+}
+
+/**
+ * 更新角色
+ */
+export async function updateRole(params: RoleUpdateParams): Promise<RoleWithStatusView> {
+  return api.put(`/api/v1/roles/${params.role_id}` as any, params) as Promise<RoleWithStatusView>;
+}
+
+/**
+ * 删除角色
+ */
+export async function deleteRole(roleId: number): Promise<void> {
+  return api.delete(`/api/v1/roles/${roleId}` as any) as Promise<void>;
+}
+
+/**
+ * 分配权限
+ */
+export async function assignPermissions(params: RolePermissionParams): Promise<void> {
+  return api.post(`/api/v1/roles/${params.role_id}/permissions` as any, { permission_ids: params.permission_ids }) as Promise<void>;
+}
+
+/**
+ * 获取角色的权限
+ */
+export async function getRolePermissions(roleId: number): Promise<number[]> {
+  const result = await api.get(`/api/v1/roles/${roleId}/permissions` as any);
+  return (result as any)?.permission_ids || [];
+}
+
+/**
+ * 获取带缓存的角色列表
+ */
+
+/**
+ * 获取带缓存的角色列表
+ */
 export async function getRolesCached(): Promise<RoleWithStatusView[]> {
   try {
-    const result = await enhancedApi.get('/roles', {
+    const result = await enhancedApi.get('/api/v1/roles', {
       cache: { ttl: 10 * 60 * 1000, key: 'roles:list' },
       label: '获取角色列表',
     });
@@ -104,7 +189,7 @@ export async function checkRoleCodeExists(roleCode: string): Promise<boolean> {
 
 export async function getRoleStats(): Promise<RoleStats> {
   try {
-    const roles = await enhancedApi.get('/roles', {
+    const roles = await enhancedApi.get('/api/v1/roles', {
       cache: { ttl: 10 * 60 * 1000, key: 'roles:stats' },
       retry: { times: 3, delay: 1000 },
       label: '获取角色统计',

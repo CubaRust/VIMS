@@ -1,0 +1,154 @@
+# Commit 信息
+
+## 2026-04-25 用户管理功能
+
+### Commit 1: feat: 实现用户管理页面基础功能
+
+```
+feat: 实现用户管理页面基础功能
+
+- 实现 API 模块 (src/api/system/user-api.ts)
+  - 添加类型定义: UserCreateParams, UserUpdateParams
+  - 移除 UserWithRolesView 扩展类型，直接使用 UserView
+  - 用户列表查询、搜索、筛选、统计
+  - 业务逻辑封装（缓存、搜索、查找）
+  - CRUD 操作接口（createUser, updateUser, deleteUser, resetPassword）
+  - 缓存管理函数
+
+- 更新 API 模块 (src/api/system/role-api.ts, permission-api.ts)
+  - 移除所有 mock 数据
+  - 改为使用真实 API 调用
+
+- 实现用户管理页面 (src/views/system/users/index.vue)
+  - 统计卡片（总用户数、启用/停用用户、当前页面）
+  - 高级搜索和筛选（关键词、角色、状态、手机号、用户编码）
+  - 数据表格（分页、排序、多选、固定列）
+  - 批量操作（批量启用/停用/删除，UI 已完成）
+  - 单个用户操作（编辑、重置密码、删除，UI 已完成）
+  - 新建/编辑用户弹窗（UI 已完成，带表单验证）
+  - 数据导出为 CSV 功能
+  - 完善的错误处理和用户提示
+
+- 修复 Vue 组件 prop 警告
+  - 修复 Statistic 组件 valueStyle prop 类型错误
+  - 将 value-style 改为 :value-style 正确绑定对象
+
+- 添加功能实现清单文档 (USER_MANAGEMENT_TODO.md)
+  - 记录已实现的功能
+  - 列出待实现的后端 API
+  - 说明功能启用步骤和 commit 信息模板
+
+注意: 
+- 用户创建、编辑、删除、重置密码功能的 UI 已完成
+- 由于后端 Swagger 中未定义对应端点，相关按钮已暂时禁用
+- 需等待后端实现 POST/PUT/DELETE /api/v1/users 端点后启用
+
+Refs: USER_MANAGEMENT_TODO.md
+```
+
+---
+
+## 待提交的变更
+
+### 修改的文件
+- src/api/system/user-api.ts
+- src/api/system/role-api.ts
+- src/api/system/permission-api.ts
+- src/composables/system/use-users.ts
+- src/views/system/roles/index.vue
+- src/views/system/users/index.vue
+
+### 新增的文件
+- USER_MANAGEMENT_GUIDE.md
+- USER_MANAGEMENT_TODO.md
+
+---
+
+## 提交命令
+
+```bash
+# 添加所有变更
+git add .
+
+# 提交
+git commit -F COMMIT_MESSAGE.txt
+
+# 或直接使用以下信息
+git commit -m "feat: 实现用户管理页面基础功能
+
+- 实现 API 模块 (src/api/system/user-api.ts)
+  - 添加类型定义: UserCreateParams, UserUpdateParams
+  - 移除 UserWithRolesView 扩展类型，直接使用 UserView
+  - 用户列表查询、搜索、筛选、统计
+  - 业务逻辑封装（缓存、搜索、查找）
+  - CRUD 操作接口（createUser, updateUser, deleteUser, resetPassword）
+  - 缓存管理函数
+
+- 更新 API 模块 (src/api/system/role-api.ts, permission-api.ts)
+  - 移除所有 mock 数据
+  - 改为使用真实 API 调用
+
+- 实现用户管理页面 (src/views/system/users/index.vue)
+  - 统计卡片（总用户数、启用/停用用户、当前页面）
+  - 高级搜索和筛选（关键词、角色、状态、手机号、用户编码）
+  - 数据表格（分页、排序、多选、固定列）
+  - 批量操作（批量启用/停用/删除，UI 已完成）
+  - 单个用户操作（编辑、重置密码、删除，UI 已完成）
+  - 新建/编辑用户弹窗（UI 已完成，带表单验证）
+  - 数据导出为 CSV 功能
+  - 完善的错误处理和用户提示
+
+- 修复 Vue 组件 prop 警告
+  - 修复 Statistic 组件 valueStyle prop 类型错误
+  - 将 value-style 改为 :value-style 正确绑定对象
+
+- 添加功能实现清单文档 (USER_MANAGEMENT_TODO.md)
+  - 记录已实现的功能
+  - 列出待实现的后端 API
+  - 说明功能启用步骤和 commit 信息模板
+
+注意: 
+- 用户创建、编辑、删除、重置密码功能的 UI 已完成
+- 由于后端 Swagger 中未定义对应端点，相关按钮已暂时禁用
+- 需等待后端实现 POST/PUT/DELETE /api/v1/users 端点后启用
+
+Refs: USER_MANAGEMENT_TODO.md"
+
+# 推送到远程仓库
+git push origin dev
+```
+
+---
+
+## 后续启用 CRUD 功能的 Commit 模板
+
+当后端实现完所需 API 后，使用以下 commit：
+
+```
+feat: 启用用户 CRUD 功能
+
+- 后端已实现用户管理相关 API 端点
+  - POST /api/v1/users - 创建用户
+  - PUT /api/v1/users/{id} - 更新用户
+  - DELETE /api/v1/users/{id} - 删除用户
+  - POST /api/v1/users/{id}/reset-password - 重置密码
+
+- 移除按钮的 disabled 属性
+  - 新建用户按钮
+  - 编辑用户按钮
+  - 删除用户按钮
+  - 重置密码按钮
+  - 批量操作按钮
+
+- 移除调试日志
+
+- 完整测试所有 CRUD 操作
+  - 创建用户
+  - 编辑用户
+  - 删除用户
+  - 重置密码
+  - 批量启用/停用
+  - 批量删除
+
+所有功能现已可用，用户管理模块完成
+```

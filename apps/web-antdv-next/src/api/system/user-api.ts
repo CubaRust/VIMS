@@ -15,15 +15,6 @@ import { enhancedApi } from '#/api';
 
 export type UserView = Schema<'UserView'>;
 
-/**
- * 后端实际返回的用户列表里包含 roles，
- * 但 Swagger 生成的 UserView 里没有 roles，
- * 所以前端这里扩展一个类型。
- */
-export type UserWithRolesView = UserView & {
-  roles?: string[];
-};
-
 export interface UserListQuery {
   keyword?: string;
   is_active?: boolean;
@@ -33,6 +24,23 @@ export interface UserStats {
   total: number;
   active: number;
   inactive: number;
+}
+
+export interface UserCreateParams {
+  login_name: string;
+  user_name: string;
+  user_code?: string;
+  mobile?: string;
+  roles?: string[];
+  is_active?: boolean;
+}
+
+export interface UserUpdateParams {
+  id: number;
+  user_name?: string;
+  mobile?: string;
+  roles?: string[];
+  is_active?: boolean;
 }
 
 /**
@@ -60,10 +68,10 @@ function normalizeUserListQuery(params?: UserListQuery) {
  */
 export async function listUsers(
   params?: UserListQuery,
-): Promise<UserWithRolesView[]> {
-  return api.get('/api/v1/users', {
+): Promise<UserView[]> {
+  return enhancedApi.get('/api/v1/users', {
     params: normalizeUserListQuery(params),
-  }) as Promise<UserWithRolesView[]>;
+  }) as Promise<UserView[]>;
 }
 
 /**
@@ -72,7 +80,7 @@ export async function listUsers(
  * @example
  * const users = await listAllUsers()
  */
-export async function listAllUsers(): Promise<UserWithRolesView[]> {
+export async function listAllUsers(): Promise<UserView[]> {
   return listUsers();
 }
 
@@ -86,7 +94,7 @@ export async function listAllUsers(): Promise<UserWithRolesView[]> {
  * @example
  * const users = await getActiveUsers()
  */
-export async function getActiveUsers(): Promise<UserWithRolesView[]> {
+export async function getActiveUsers(): Promise<UserView[]> {
   return enhancedApi.get('/api/v1/users', {
     params: normalizeUserListQuery({
       is_active: true,
@@ -96,7 +104,7 @@ export async function getActiveUsers(): Promise<UserWithRolesView[]> {
       key: 'users:active',
     },
     label: '获取启用用户',
-  }) as Promise<UserWithRolesView[]>;
+  }) as Promise<UserView[]>;
 }
 
 /**
@@ -107,7 +115,7 @@ export async function getActiveUsers(): Promise<UserWithRolesView[]> {
  */
 export async function searchUsers(
   keyword: string,
-): Promise<UserWithRolesView[]> {
+): Promise<UserView[]> {
   const normalizedKeyword = keyword.trim();
 
   if (!normalizedKeyword) {
@@ -124,7 +132,7 @@ export async function searchUsers(
       key: `users:search:${normalizedKeyword}`,
     },
     label: `搜索用户: ${normalizedKeyword}`,
-  }) as Promise<UserWithRolesView[]>;
+  }) as Promise<UserView[]>;
 }
 
 /**
@@ -135,7 +143,7 @@ export async function searchUsers(
  */
 export async function findUserByCode(
   userCode: string,
-): Promise<UserWithRolesView | null> {
+): Promise<UserView | null> {
   const normalizedUserCode = userCode.trim();
 
   if (!normalizedUserCode) {
@@ -159,7 +167,7 @@ export async function findUserByCode(
  */
 export async function findUserByLoginName(
   loginName: string,
-): Promise<UserWithRolesView | null> {
+): Promise<UserView | null> {
   const normalizedLoginName = loginName.trim();
 
   if (!normalizedLoginName) {
@@ -195,7 +203,7 @@ export async function getUserStats(): Promise<UserStats> {
       key: 'users:stats',
     },
     label: '获取用户统计',
-  })) as UserWithRolesView[];
+  })) as UserView[];
 
   return {
     total: users.length,
@@ -212,7 +220,7 @@ export async function getUserStats(): Promise<UserStats> {
  */
 export async function getUsersByRole(
   roleCode: string,
-): Promise<UserWithRolesView[]> {
+): Promise<UserView[]> {
   const normalizedRoleCode = roleCode.trim();
 
   if (!normalizedRoleCode) {
@@ -266,4 +274,88 @@ export function clearActiveUserCache() {
  */
 export function clearUserStatsCache() {
   enhancedApi.clearCache('users:stats');
+}
+
+// ============================================================================
+// 用户 CRUD 操作
+// ============================================================================
+
+/**
+ * 获取用户详情
+ *
+ * @example
+ * const user = await getUserDetail(1)
+ */
+export async function getUserDetail(
+  userId: number,
+): Promise<UserView | null> {
+  try {
+    return (await api.get(`/api/v1/users/${userId}` as any)) as UserView;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 创建用户
+ *
+ * @example
+ * const user = await createUser({
+ *   login_name: 'testuser',
+ *   user_name: '测试用户',
+ *   roles: ['user'],
+ *   is_active: true,
+ * })
+ */
+export async function createUser(
+  params: UserCreateParams,
+): Promise<UserView> {
+  console.log('Creating user with params:', params);
+  try {
+    const result = await api.post('/api/v1/users' as any, params);
+    console.log('Create user response:', result);
+    return result as UserView;
+  } catch (error) {
+    console.error('Create user error:', error);
+    throw error;
+  }
+}
+
+/**
+ * 更新用户
+ *
+ * @example
+ * const user = await updateUser({
+ *   id: 1,
+ *   user_name: '新用户名',
+ *   is_active: false,
+ * })
+ */
+export async function updateUser(
+  params: UserUpdateParams,
+): Promise<UserView> {
+  return api.put(`/api/v1/users/${params.id}` as any, params) as Promise<UserView>;
+}
+
+/**
+ * 删除用户
+ *
+ * @example
+ * await deleteUser(1)
+ */
+export async function deleteUser(userId: number): Promise<void> {
+  return api.delete(`/api/v1/users/${userId}` as any) as Promise<void>;
+}
+
+/**
+ * 重置用户密码
+ *
+ * @example
+ * await resetPassword(1, 'newpassword123')
+ */
+export async function resetPassword(
+  userId: number,
+  newPassword: string = '123456',
+): Promise<void> {
+  return api.post(`/api/v1/users/${userId}/reset-password` as any, { password: newPassword }) as Promise<void>;
 }

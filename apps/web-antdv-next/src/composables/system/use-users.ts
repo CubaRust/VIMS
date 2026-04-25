@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import type {
   UserListQuery,
   UserStats,
-  UserWithRolesView,
+  UserView,
 } from '#/api/system/user-api';
 
 import {
@@ -22,9 +22,9 @@ import {
 } from '#/api/system';
 
 export function useUsers() {
-  const users = ref<UserWithRolesView[]>([]);
-  const activeUsers = ref<UserWithRolesView[]>([]);
-  const searchResult = ref<UserWithRolesView[]>([]);
+  const users = ref<UserView[]>([]);
+  const activeUsers = ref<UserView[]>([]);
+  const searchResult = ref<UserView[]>([]);
   const stats = ref<UserStats | null>(null);
 
   const loading = ref(false);
